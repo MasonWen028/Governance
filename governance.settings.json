@@ -21,7 +21,7 @@
         "provider": "deepseek",
         "model": "deepseek-flash",
         "baseUrl": "",
-        "apiKeyEnv": "OPENCODE_API_KEY"
+        "apiKeyEnv": "DEEPSEEK_API_KEY"
       },
       "claude": {
         "enabled": false,

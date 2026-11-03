@@ -75,6 +75,46 @@ answer is specific:
 | `not found on PATH` | The CLI is not installed, or `agents.cli` in settings names the wrong command. |
 | `could not be started: …` | Installed but unrunnable; the message carries the underlying error. |
 
+### On a machine with no agent CLI
+
+Both `spawn opencode ENOENT` and `… API key is not set` come from real mode.
+`serve:demo` never probes the CLI, so neither can appear — start there.
+
+To run the real agent on a fresh machine:
+
+```bash
+npm install -g opencode-ai   # the package is opencode-ai; the command is opencode
+opencode --version           # "command not found" means npm's global bin is off PATH
+npm prefix -g                # add the printed path to PATH, then reopen the terminal
+
+opencode auth login          # pick a provider, paste the key
+```
+
+`opencode auth login` is the reliable route: it writes the credential where
+OpenCode already looks, so no environment variable is involved at all.
+
+If you would rather use a variable, its name has to match the provider in
+`governance.settings.json`. That file ships with `provider: deepseek`, so the
+variable is `DEEPSEEK_API_KEY`:
+
+```bash
+setx DEEPSEEK_API_KEY "sk-…"   # Windows; reopen the terminal
+export DEEPSEEK_API_KEY=sk-…   # macOS / Linux
+```
+
+`OPENCODE_API_KEY` is OpenCode Zen's variable and does nothing for DeepSeek. Naming
+the wrong one is why the app can report "not set" while the agent is in fact
+authenticated through its own `auth.json` — in `cli` transport the credential is
+OpenCode's business, and this field only says which variable to check.
+
+Two more things that differ per machine:
+
+- **`governance.workspaces.json` is machine-local.** It carries absolute paths from
+  the machine that wrote it. Replace `roots` with local checkouts, or a scan finds
+  nothing.
+- **No CLI at all?** Set `agents.transport` to `"api"` in
+  `governance.settings.json` and set `ANTHROPIC_API_KEY`. Nothing is spawned.
+
 ### What a test run covers
 
 | Gate | Command |
