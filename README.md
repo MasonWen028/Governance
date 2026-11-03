@@ -54,6 +54,49 @@ off disk and runs an agent, so it needs the server. Opened as a file the browser
 blocks its modules and nothing renders. If you do open it that way, the page now
 says so rather than showing a blank screen.
 
+### Reaching it from another machine
+
+The server binds `127.0.0.1` and refuses any request whose `Host` is not
+loopback. That check is DNS-rebinding armor and it is load-bearing: there is no
+login in front of this server and, by design, there never will be. So pointing a
+Cloudflare Tunnel straight at port 4173 does **not** work — the tunnel arrives
+with `Host: <name>.trycloudflare.com` and every request is answered before it
+reaches a route:
+
+```
+{"error":"refusing non-loopback host header: abc.trycloudflare.com"}
+```
+
+Two ways through.
+
+**Same network: forward, do not publish.** An SSH local forward makes the far end
+a genuine loopback port, so the guard passes honestly and nothing is exposed to
+anyone else:
+
+```bash
+ssh -L 4173:127.0.0.1:4173 <this-host>    # run on the other machine
+# then open http://127.0.0.1:4173 there
+```
+
+**Different networks: put the proxy in front, then tunnel that.** It rewrites
+`Host` and drops `Origin`, and it binds loopback itself, so the tunnel running on
+this machine is the only thing that can reach it:
+
+```bash
+npm run proxy:remote -- --to 4173 --port 4180 --accept-risk
+cloudflared tunnel --url http://127.0.0.1:4180
+```
+
+Read the warning it prints before you run it. The tunnel URL is unauthenticated:
+whoever has it can read every file under your workspace roots, create projects,
+and run an agent that spends money. A quick-tunnel URL is random and short-lived,
+which is some mitigation and is not access control. Stop the tunnel when the demo
+ends.
+
+Either way also fixes the empty-workspaces problem on its own — the server reads
+*this* machine's disk, where the roots in `governance.workspaces.json` actually
+exist.
+
 ### Verifying, two ways
 
 `serve:demo` runs the whole flow against a scripted agent. Use it to check the
