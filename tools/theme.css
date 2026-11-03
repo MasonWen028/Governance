@@ -1,0 +1,223 @@
+/* ==========================================================================
+   Governance UI — theme layer (Multica-flavored reskin + light/dark/system)
+   ==========================================================================
+   This layer is APPENDED after the prototype's stylesheet and touches nothing
+   in it. It works in two moves:
+
+   1. Token remap. The prototype's design system is fully tokenized, so the
+      light look is re-derived by redefining `:root` values — surfaces, hairline
+      borders, near-zero shadows, black primary buttons.
+
+   2. `html[data-theme="dark"]` remaps the same tokens, plus overrides the few
+      hardcoded whites (`#fff` surfaces, white menu translucency) that tokens
+      cannot reach.
+
+   Injected by tools/theme-wire.py (idempotent). Do not edit the generated
+   block inside web/index.html — edit this file and re-run the injector.
+   ========================================================================== */
+
+/* ---------- 1. Light: Multica-flavored tokens ---------- */
+:root{
+  /* Surfaces: chrome surfaces (menubar, sidebar, rails, statusbar) go white;
+     the content canvas goes to a whisper of gray so white cards read. */
+  --chrome:#ffffff;
+  --content:#f7f7f8;
+  /* Hairlines carry all the structure; shadows almost none. */
+  --sep:rgba(0,0,0,.085);
+  --sep2:rgba(0,0,0,.055);
+  --fill:rgba(0,0,0,.045);
+  --fill2:rgba(0,0,0,.08);
+  /* Ink. */
+  --label:#18181b;
+  --label-2:#5f5f68;
+  --label-3:#8b8b93;
+  --label-4:#b4b4bb;
+  /* Primary action: black, like the reference UI. */
+  --btn-primary:#18181b;
+  --btn-primary-h:#2e2e33;
+  --btn-primary-label:#ffffff;
+  /* Popovers are solid, not glass. */
+  --popover:#ffffff;
+  --panel:#ffffff;
+  /* Elevation: borders first, shadow only for floating layers. */
+  --sh1:0 0 0 0 rgba(0,0,0,0);
+  --sh2:0 8px 24px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+  --sh3:0 24px 64px rgba(0,0,0,.16), 0 4px 12px rgba(0,0,0,.08);
+}
+
+/* ---------- 2. Dark: same tokens, zinc palette ---------- */
+html[data-theme="dark"]{
+  --chrome:#1b1b1f;
+  --content:#141417;
+  --sep:rgba(255,255,255,.105);
+  --sep2:rgba(255,255,255,.065);
+  --fill:rgba(255,255,255,.07);
+  --fill2:rgba(255,255,255,.12);
+  --label:#f1f1f3;
+  --label-2:#a4a4ad;
+  --label-3:#74747d;
+  --label-4:#54545c;
+  --btn-primary:#ededf0;
+  --btn-primary-h:#d9d9de;
+  --btn-primary-label:#18181b;
+  --popover:#232327;
+  --panel:#1f1f23;
+  --sh1:0 0 0 0 rgba(0,0,0,0);
+  --sh2:0 8px 24px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
+  --sh3:0 24px 64px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.5);
+  /* Tinted text colors need lighter variants on dark surfaces. */
+  --blue-d:#79b8ff;  --green-d:#57d48a;  --orange-d:#ffab5e;  --red-d:#ff8177;
+  --purple-d:#cda1ef; --teal-d:#63cfe0;  --gray-d:#9d9da6;
+  --accent:#3b82f6;  --accent-h:#5a94f7;
+}
+
+/* ---------- 3. Cross-theme component flavor ---------- */
+
+/* Primary buttons: black (white-on-dark), no colored shadow. */
+.btn-p{background:var(--btn-primary);border-color:transparent;color:var(--btn-primary-label);
+  box-shadow:none}
+.btn-p:hover{background:var(--btn-primary-h)}
+
+/* Hairline buttons instead of shadowed ones. */
+.btn{border-color:var(--sep);box-shadow:none}
+.btn:hover{background:var(--fill)}
+
+/* Cards and tiles: border carries them, shadow does not. */
+.card,.tcard,.gate,.tile,.prd,.qc,.opt,.slot,.bn-card{box-shadow:none}
+.tcard:hover{transform:none;box-shadow:0 0 0 .5px var(--sep),var(--sh2)}
+.gate:hover{transform:none;box-shadow:0 0 0 .5px var(--sep),var(--sh2)}
+.opt:hover{transform:none;box-shadow:0 0 0 .5px var(--sep),var(--sh2)}
+
+/* Menus and popovers: solid panels with a hairline, not frosted glass. */
+.menu,.projsw{background:var(--popover);border:1px solid var(--sep);
+  box-shadow:var(--sh2);backdrop-filter:none;-webkit-backdrop-filter:none}
+.mtitle:hover{background:var(--fill)}
+/* Menu highlight: neutral gray, the way the reference UI does it — blue is
+   reserved for state, not for "the pointer is here". */
+.mitem:not(.dis):hover{background:var(--fill2);color:var(--label)}
+.mitem:not(.dis):hover .mk,.mitem:not(.dis):hover .arw{color:var(--label-3)}
+
+/* Settings rail: active category is a neutral fill, not blue. */
+.set-cat.on{background:var(--fill2);color:var(--label);font-weight:600}
+.set-cat.on svg{opacity:.9}
+
+/* Segmented control: white (panel) thumb with a hairline. */
+.segbtn.on{background:var(--panel);color:var(--label);
+  box-shadow:0 0 0 .5px var(--sep),0 1px 2px rgba(0,0,0,.05)}
+
+/* Sidebar section labels: small caps, like the reference. */
+.sec{letter-spacing:.07em;text-transform:uppercase;font-size:10px;font-weight:600}
+
+/* Wizard + settings nav: same neutral treatment. */
+.wz-step.on{background:var(--fill2)}
+.set-top,.wz-top{backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* Focus rings stay the one strong blue in the palette. */
+.field input:focus,.field textarea:focus,.field select:focus,
+.wz-seed:focus,.qc-other input:focus{box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+
+/* ---------- 4. Dark-only overrides for hardcoded surfaces ---------- */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .tcard,
+html[data-theme="dark"] .gate,
+html[data-theme="dark"] .tile,
+html[data-theme="dark"] .prd,
+html[data-theme="dark"] .qc,
+html[data-theme="dark"] .opt,
+html[data-theme="dark"] .slot,
+html[data-theme="dark"] .bn-card,
+html[data-theme="dark"] .sheet,
+html[data-theme="dark"] .segbtn.on{background:var(--panel)}
+
+html[data-theme="dark"] .opt.other{background:transparent}
+html[data-theme="dark"] .stepper,
+html[data-theme="dark"] .stepper button,
+html[data-theme="dark"] .stepper button:disabled,
+html[data-theme="dark"] .stepper .val,
+html[data-theme="dark"] .checks label,
+html[data-theme="dark"] .mini-btn{background:var(--panel)}
+html[data-theme="dark"] .field input[type=text],
+html[data-theme="dark"] .field textarea,
+html[data-theme="dark"] .field select,
+html[data-theme="dark"] .wz-seed,
+html[data-theme="dark"] .qc-other input{background:var(--panel);
+  border-color:var(--sep);color:var(--label)}
+html[data-theme="dark"] .field input::placeholder,
+html[data-theme="dark"] .wz-seed::placeholder,
+html[data-theme="dark"] .qc-other input::placeholder{color:var(--label-4)}
+html[data-theme="dark"] .field select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.6 6 7.6 9 4.6' fill='none' stroke='%2374747d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
+html[data-theme="dark"] .sheet>header,
+html[data-theme="dark"] .sheet footer{background:rgba(31,31,35,.88)}
+html[data-theme="dark"] .menu,
+html[data-theme="dark"] .projsw{background:var(--popover)}
+html[data-theme="dark"] .mtitle:hover{background:var(--fill)}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);
+  border-radius:99px;border:3px solid transparent;background-clip:content-box}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.34);
+  background-clip:content-box}
+html[data-theme="dark"] .overlay,
+html[data-theme="dark"] .settings{background:rgba(0,0,0,.55)}
+html[data-theme="dark"] .sw i{background:rgba(255,255,255,.22)}
+html[data-theme="dark"] .sw2{background:rgba(255,255,255,.22)}
+html[data-theme="dark"] .conn-banner{background:rgba(255,59,48,.14)}
+html[data-theme="dark"] .boot-notice{background:var(--content)}
+html[data-theme="dark"] .toast{background:rgba(240,240,244,.92);color:#18181b}
+
+/* System-mode responsiveness: when the user has not chosen explicitly, the
+   page follows the OS. The attribute is kept in sync by web/theme.js; this
+   media query is a belt-and-braces fallback for the first paint. */
+@media (prefers-color-scheme: dark){
+  html[data-theme="system"]{
+    --chrome:#1b1b1f; --content:#141417;
+    --sep:rgba(255,255,255,.105); --sep2:rgba(255,255,255,.065);
+    --fill:rgba(255,255,255,.07); --fill2:rgba(255,255,255,.12);
+    --label:#f1f1f3; --label-2:#a4a4ad; --label-3:#74747d; --label-4:#54545c;
+    --btn-primary:#ededf0; --btn-primary-h:#d9d9de; --btn-primary-label:#18181b;
+    --popover:#232327; --panel:#1f1f23;
+    --sh1:0 0 0 0 rgba(0,0,0,0);
+    --sh2:0 8px 24px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
+    --sh3:0 24px 64px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.5);
+    --blue-d:#79b8ff; --green-d:#57d48a; --orange-d:#ffab5e; --red-d:#ff8177;
+    --purple-d:#cda1ef; --teal-d:#63cfe0; --gray-d:#9d9da6;
+    --accent:#3b82f6; --accent-h:#5a94f7;
+  }
+  html[data-theme="system"] .card,
+  html[data-theme="system"] .tcard,
+  html[data-theme="system"] .gate,
+  html[data-theme="system"] .tile,
+  html[data-theme="system"] .prd,
+  html[data-theme="system"] .qc,
+  html[data-theme="system"] .opt,
+  html[data-theme="system"] .slot,
+  html[data-theme="system"] .bn-card,
+  html[data-theme="system"] .sheet,
+  html[data-theme="system"] .segbtn.on{background:var(--panel)}
+  html[data-theme="system"] .opt.other{background:transparent}
+  html[data-theme="system"] .stepper,
+  html[data-theme="system"] .stepper button,
+  html[data-theme="system"] .stepper button:disabled,
+  html[data-theme="system"] .stepper .val,
+  html[data-theme="system"] .checks label,
+  html[data-theme="system"] .mini-btn{background:var(--panel)}
+  html[data-theme="system"] .field input[type=text],
+  html[data-theme="system"] .field textarea,
+  html[data-theme="system"] .field select,
+  html[data-theme="system"] .wz-seed,
+  html[data-theme="system"] .qc-other input{background:var(--panel);
+    border-color:var(--sep);color:var(--label)}
+  html[data-theme="system"] .sheet>header,
+  html[data-theme="system"] .sheet footer{background:rgba(31,31,35,.88)}
+  html[data-theme="system"] .menu,
+  html[data-theme="system"] .projsw{background:var(--popover)}
+  html[data-theme="system"] .mtitle:hover{background:var(--fill)}
+  html[data-theme="system"] .mitem:not(.dis):hover{background:var(--fill2);color:var(--label)}
+  html[data-theme="system"] .mitem:not(.dis):hover .mk,
+  html[data-theme="system"] .mitem:not(.dis):hover .arw{color:var(--label-3)}
+  html[data-theme="system"] .set-cat.on{background:var(--fill2);color:var(--label)}
+  html[data-theme="system"] .segbtn.on{background:var(--panel)}
+  html[data-theme="system"] .btn-p{background:var(--btn-primary);color:var(--btn-primary-label)}
+  html[data-theme="system"] .toast{background:rgba(240,240,244,.92);color:#18181b}
+  html[data-theme="system"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);
+    border-radius:99px;border:3px solid transparent;background-clip:content-box}
+}

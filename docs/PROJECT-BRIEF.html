@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Governance — 项目简介</title>
+<style>
+  :root{
+    --accent:#0071e3; --accent-d:#0062cc;
+    --label:#1d1d1f; --label-2:#6e6e73; --label-3:#8a8a8f;
+    --sep:rgba(60,60,67,.14); --sep2:rgba(60,60,67,.08);
+    --bg:#f5f5f7; --card:#ffffff;
+    --green:#248a3d; --green-t:rgba(52,199,89,.12);
+    --orange:#b25000; --orange-t:rgba(255,149,0,.14);
+    --red:#d70015;   --red-t:rgba(255,59,48,.10);
+    --blue-t:rgba(0,113,227,.09);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Inter","SF Pro Text","Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--label);
+    font-family:var(--sans); font-size:15px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:56px 32px 72px}
+
+  /* ---------- header ---------- */
+  .eyebrow{
+    font:600 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:18px;
+  }
+  h1{font-size:46px;line-height:1.08;letter-spacing:-.028em;margin:0 0 16px;font-weight:680}
+  h1 small{display:block;font-size:15px;font-weight:500;letter-spacing:0;color:var(--label-2);margin-top:12px}
+  .lede{font-size:19px;line-height:1.55;color:var(--label-2);margin:0 0 28px;max-width:74ch}
+  .lede b{color:var(--label);font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .chip{
+    font:500 12px/1 var(--mono); padding:7px 11px; border-radius:999px;
+    background:var(--card); border:1px solid var(--sep); color:var(--label-2);
+  }
+  .chip.k{color:var(--accent);border-color:rgba(0,113,227,.28);background:var(--blue-t)}
+
+  /* ---------- sections ---------- */
+  section{margin-top:52px}
+  h2{
+    font-size:12px;font-weight:650;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--label-3);margin:0 0 18px;display:flex;align-items:center;gap:10px;
+  }
+  h2::after{content:"";flex:1;height:1px;background:var(--sep2)}
+  h3{font-size:16px;margin:0 0 6px;font-weight:620;letter-spacing:-.01em}
+  p{margin:0 0 12px}
+  .muted{color:var(--label-2)}
+
+  .card{background:var(--card);border:1px solid var(--sep2);border-radius:14px;padding:22px 24px}
+
+  /* ---------- problem rows ---------- */
+  .rows{display:grid;gap:1px;background:var(--sep2);border:1px solid var(--sep2);border-radius:14px;overflow:hidden}
+  .row{background:var(--card);display:grid;grid-template-columns:1.05fr 1.15fr 1.35fr;gap:20px;padding:18px 22px}
+  .row .k{font-weight:600;font-size:14px}
+  .row .k span{display:block;font-weight:400;font-size:12.5px;color:var(--label-3);margin-top:3px}
+  .row .v{font-size:13.5px;color:var(--label-2)}
+  .row .s{font-size:13.5px;color:var(--label);border-left:2px solid rgba(0,113,227,.35);padding-left:14px}
+
+  /* ---------- rail ---------- */
+  .rail{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin:6px 0 10px}
+  .st{background:var(--card);border:1px solid var(--sep2);border-radius:9px;padding:10px 8px;text-align:center}
+  .st .n{font:600 10px/1 var(--mono);color:var(--label-3);margin-bottom:7px}
+  .st .t{font-size:11.5px;font-weight:600;line-height:1.3}
+  .st .e{font-size:10px;color:var(--label-3);margin-top:3px;font-family:var(--mono)}
+  .st.hi{border-color:rgba(0,113,227,.4);background:var(--blue-t)}
+  .st.hi .t{color:var(--accent-d)}
+  .st.hi .n{color:var(--accent)}
+  .rail-note{font-size:12.5px;color:var(--label-2);display:flex;gap:8px;align-items:flex-start;margin-top:12px}
+  .rail-note .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:6px;flex:none}
+
+  /* ---------- invariant cards ---------- */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .inv{background:var(--card);border:1px solid var(--sep2);border-radius:14px;padding:20px}
+  .inv .tag{font:600 10px/1 var(--mono);letter-spacing:.1em;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+  .inv p{font-size:13.5px;color:var(--label-2);margin:8px 0 0}
+  .inv p b{color:var(--label);font-weight:600}
+
+  /* ---------- code / evidence ---------- */
+  pre{
+    font:12.5px/1.62 var(--mono); background:#1d1d1f; color:#e8e8ed;
+    padding:18px 20px; border-radius:12px; overflow-x:auto; margin:12px 0 0;
+  }
+  pre .g{color:#7ee2a8}
+  pre .o{color:#ffcf6e}
+  pre .c{color:#9a9aa1}
+  code{font:12.5px var(--mono);background:rgba(120,120,128,.12);padding:2px 6px;border-radius:5px}
+
+  /* ---------- table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--sep2);vertical-align:top}
+  th{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--label-3)}
+  td:first-child{font-weight:550}
+  tr:last-child td{border-bottom:none}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ---------- two column layout ---------- */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  ul.tight{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--label-2)}
+  ul.tight li{margin-bottom:7px}
+  ul.tight b{color:var(--label);font-weight:600}
+
+  .badge{display:inline-block;font:600 10px/1 var(--mono);padding:4px 8px;border-radius:5px;letter-spacing:.06em;text-transform:uppercase}
+  .b-ok{background:var(--green-t);color:var(--green)}
+  .b-warn{background:var(--orange-t);color:var(--orange)}
+  .b-no{background:var(--red-t);color:var(--red)}
+
+  /* ---------- quote / pitch ---------- */
+  .pitch{background:var(--card);border:1px solid var(--sep2);border-radius:14px;padding:26px 28px;position:relative}
+  .pitch::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:3px;background:var(--accent);border-radius:3px}
+  .pitch p{font-size:16.5px;line-height:1.68;margin:0;color:var(--label)}
+  .pitch p b{font-weight:640}
+
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--sep);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--label-3);font-family:var(--mono)}
+
+  @media (max-width:820px){
+    .wrap{padding:36px 18px 56px}
+    h1{font-size:34px}
+    .row{grid-template-columns:1fr;gap:8px}
+    .grid3,.two{grid-template-columns:1fr}
+    .rail{grid-template-columns:repeat(3,1fr)}
+  }
+  @media print{
+    body{background:#fff}
+    .wrap{padding:0;max-width:none}
+    section{margin-top:28px;break-inside:avoid}
+    .card,.inv,.pitch,.rows,pre{break-inside:avoid}
+    pre{background:#f2f2f4;color:#1d1d1f}
+    pre .g,pre .o,pre .c{color:#4a4a4f}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Local control plane · v0.1.0 · experimental</div>
+  <h1>Governance
+    <small>一个跑在本机的工程控制面 —— 阶段状态由磁盘上的产物推导，gate 决定只能追加，不能改写。</small>
+  </h1>
+  <p class="lede">
+    大多数 AI 编码工具优化的是<b>产出速度</b>。这个东西优化的是另一件事：<b>你能不能证明某个阶段真的发生过。</b>
+    它从你的 Markdown 工作区读出事实，推导出九个阶段的状态，把需要人拍板的地方变成 gate，然后只做一件事 —— 把每个决定原样记下来。
+  </p>
+  <div class="chips">
+    <span class="chip k">本地 · 127.0.0.1</span>
+    <span class="chip">TypeScript</span>
+    <span class="chip">运行时零依赖</span>
+    <span class="chip">Markdown 为唯一真相</span>
+    <span class="chip">219 条断言</span>
+    <span class="chip">中英双语</span>
+  </div>
+
+  <section>
+    <h2>它解决什么问题</h2>
+    <div class="rows">
+      <div class="row">
+        <div class="k">状态靠人点<span>看板上的"已完成"</span></div>
+        <div class="v">和磁盘上的东西对不上，最后变成第二个互相矛盾的真相来源。</div>
+        <div class="s">阶段状态<b>从产物推导</b>。纯函数，不看时钟、不读配置，也不接受人的声明。</div>
+      </div>
+      <div class="row">
+        <div class="k">审批靠记忆<span>谁在什么时候批了什么</span></div>
+        <div class="v">说不清。而且改一次状态，整条审计链就断了。</div>
+        <div class="s">Gate = 不可变定义 + 只追加的 <code>decisions.jsonl</code>，日志是唯一权威。</div>
+      </div>
+      <div class="row">
+        <div class="k">缺口被抹平<span>没做设计，票却开了一堆</span></div>
+        <div class="v">系统显示一切正常，直到返工把代价还回来。</div>
+        <div class="s">Crossed <b>只报告，不吸收</b>。检测到缺口就说出来，不折叠成"完成"。</div>
+      </div>
+    </div>
+
+    <div class="rail" style="margin-top:22px">
+      <div class="st"><div class="n">01</div><div class="t">intake</div><div class="e">概念</div></div>
+      <div class="st"><div class="n">02</div><div class="t">ask</div><div class="e">提问</div></div>
+      <div class="st"><div class="n">03</div><div class="t">spec</div><div class="e">规格</div></div>
+      <div class="st hi"><div class="n">04</div><div class="t">design</div><div class="e">接口</div></div>
+      <div class="st"><div class="n">05</div><div class="t">split</div><div class="e">切片</div></div>
+      <div class="st"><div class="n">06</div><div class="t">develop</div><div class="e">建造</div></div>
+      <div class="st"><div class="n">07</div><div class="t">review</div><div class="e">验收</div></div>
+      <div class="st"><div class="n">08</div><div class="t">ship</div><div class="e">发布</div></div>
+      <div class="st"><div class="n">09</div><div class="t">retro</div><div class="e">复盘</div></div>
+    </div>
+    <div class="rail-note">
+      <span class="dot"></span>
+      <span><b>design 为什么单独一站：</b>切片是依赖接口排出来的。接口没定就切片，切出来的片子一定会重写。它可以被跳过，但只能用 <code>**Design:** none - &lt;理由&gt;</code> —— 让跳过成为一条有记录的决策，而不是一次疏忽。</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>三条不变量</h2>
+    <div class="grid3">
+      <div class="inv">
+        <div class="tag">Invariant 01</div>
+        <h3>状态派生，不可声明</h3>
+        <p>一个阶段不能"声称"自己完成 —— <b>它产出的东西存在</b>，才使它完成。这就是看板不会变成第二个真相来源的原因。</p>
+      </div>
+      <div class="inv">
+        <div class="tag">Invariant 02</div>
+        <h3>决定追加，不可覆写</h3>
+        <p>通过 / 退回 / 跳过 / 强制通过，各写一行。<b>强制通过必须写理由</b>（<code>override</code>），因为它是唯一一种可以违背证据的结论。</p>
+      </div>
+      <div class="inv">
+        <div class="tag">Invariant 03</div>
+        <h3>缺口报告，不可抹平</h3>
+        <p>下游有产物、上游没满足 —— 阶段报 <code>active</code> 并挂 <code>crossed</code> 警告。<b>一个能检测缺口却把缺口吸收掉的 gate，看起来像治理，实际在放行它存在的意义所要阻止的事。</b></p>
+      </div>
+    </div>
+    <p class="muted" style="font-size:13px;margin-top:14px">
+      还有第零条：<b>整个产品里没有任何百分比。</b>九个阶段上的一个百分比，暗示了一种这个环路并不具备的精度。只显示离散状态。
+    </p>
+
+    <pre><span class="c">$ governance scan</span>
+railyard [methodology-view*]
+  H:\Projects\railyard
+  methodology-view   <span class="g">+++</span><span class="o">&gt;&gt;&gt;&gt;</span>.   3/9  at design  13 tickets  all resolved
+  <span class="o">!</span> stage "split"   has output but "design" was never satisfied (crossed)
+  <span class="o">!</span> stage "develop" has output but "split"  was never satisfied (crossed)
+
+<span class="c">—— 不是解析 bug。票开了、活干了，但没有任何一份 design 产物被声明过。
+   工具把缺口说了出来，而不是替人抹平。这就是它存在的理由。</span></pre>
+  </section>
+
+  <section>
+    <h2>产品形态</h2>
+    <div class="two">
+      <div class="card">
+        <h3>三个命令</h3>
+        <table style="margin-top:10px">
+          <tr><td><code>scan</code></td><td class="muted">读工作区，打印阶段与告警；<code>--json</code> 给机器读</td></tr>
+          <tr><td><code>serve</code></td><td class="muted">本地 UI + API，前台运行</td></tr>
+          <tr><td><code>advance</code></td><td class="muted">规划下一阶段；<b>默认 dry run</b>，<code>--execute</code> 才真的启动</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>界面上有</h3>
+        <ul class="tight">
+          <li><b>Portfolio</b> — 多仓库总览，谁被 gate 卡住一眼看到</li>
+          <li><b>Pipeline rail</b> — 九阶段 + 对应 skill；停用或未安装直接标出</li>
+          <li><b>Slice board</b> — 票按阻塞图深度排成列，无需手工排序</li>
+          <li><b>Gate 面板</b> — 通过 / 退回 / 跳过，各带证据指针</li>
+          <li><b>Inbox</b> — 还欠人一个决定的地方</li>
+          <li><b>Settings</b> — agents / skills / MCP / git / automation</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>新项目：一句模糊的话进，一份 PRD 出</h2>
+    <div class="card">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-bottom:14px">
+        <span style="background:var(--blue-t);color:var(--accent-d);padding:6px 12px;border-radius:7px">idea</span>
+        <span class="muted">→</span>
+        <span style="background:var(--blue-t);color:var(--accent-d);padding:6px 12px;border-radius:7px">rounds</span>
+        <span class="muted">→</span>
+        <span style="background:var(--green-t);color:var(--green);padding:6px 12px;border-radius:7px">prd</span>
+      </div>
+      <ul class="tight" style="font-size:14px">
+        <li>想法<b>原样送入</b>，不做整理 —— 模糊本身就是原料。</li>
+        <li>中间那一步由 <code>/grill-with-docs</code> 这个 skill 驱动。<b>应用里没有一行"该怎么提问"的逻辑</b>，提示词只说明读哪个文件、要什么格式回来。</li>
+        <li>每轮返回<b>问题 + agent 自己会给出的答案</b>，全部同意就是一键通过。</li>
+        <li>前沿没清空之前<b>拒绝生成 PRD</b> —— 提前冻结会锁死那些还没被问到的问题。</li>
+        <li>每个 effort <b>一条会话</b>，关电脑、第二天回来，从同一轮继续。</li>
+        <li>每一轮都是磁盘上的产物，不是一个正在消失的聊天窗口。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>边界：明确不做什么</h2>
+    <p class="muted" style="font-size:13.5px;margin-bottom:14px">这些不是"还没做"，是设计本身。去掉任何一条，这个产品的性质就变了。</p>
+    <table>
+      <tr><th style="width:34%">边界</th><th>原因</th></tr>
+      <tr><td>只监听 loopback</td><td class="muted">没有网络面，所以也不需要认证；不会有第二个用户。</td></tr>
+      <tr><td>前台运行，无定时器，无文件监听</td><td class="muted">进程退出就什么都不在跑。否则它会变成一个后台自己刷新的看板 —— 那就成了它不该是的托管服务。</td></tr>
+      <tr><td>只写 effort 自己的 <code>.scratch/</code></td><td class="muted">服务端从不接受客户端传来的路径；解析后二次校验仍在工作区内，并有路径穿越测试。</td></tr>
+      <tr><td>不制造新的真相来源</td><td class="muted">Markdown 永远权威，每次请求重读、不缓存。<b>过期的看板比慢的看板更糟。</b></td></tr>
+      <tr><td>不执行部署</td><td class="muted">部署在这里被批准、被记录；执行留在外面。</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>现状</h2>
+    <div class="two">
+      <div class="card">
+        <h3 style="margin-bottom:12px">已验证 <span class="badge b-ok" style="margin-left:6px">green</span></h3>
+        <table>
+          <tr><td>单元断言</td><td class="muted num">219 / 219</td></tr>
+          <tr><td>Web 无头启动</td><td class="muted">整页渲染 + 每个 inline handler 可调用</td></tr>
+          <tr><td>会话 e2e</td><td class="muted">真 socket · 重置与恢复</td></tr>
+          <tr><td>Demo e2e</td><td class="muted">真 socket · 完整 idea → PRD</td></tr>
+          <tr><td>页面自检</td><td class="muted">文案与状态一致，含反向断言</td></tr>
+        </table>
+        <p class="muted" style="font-size:12.5px;margin-top:12px">
+          对真实语料测，不只对 fixture 测；真实文件系统、真实 socket；失败必须分类，不能合并成一个布尔。
+        </p>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:12px">已知缺口 <span class="badge b-warn" style="margin-left:6px">open</span></h3>
+        <ul class="tight">
+          <li><b>GitHub 镜像</b> — 延后；将来也只能单向出，不能成为第二权威</li>
+          <li><b>SLA 超时升级</b> — 没有定时器可挂，字段存着，不假装在跑</li>
+          <li><b>运行历史进 UI</b> — 日志在写，视图还没读</li>
+          <li><b>并行调度</b> — <code>maxParallel</code> 存了、显示了，一次仍只跑一个阶段</li>
+          <li><b>真实 CLI 本机不可执行</b> — 沙箱拦截；探针分别报告「装了吗」和「能跑吗」</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>30 秒讲法</h2>
+    <div class="pitch">
+      <p>
+        这是一个本地的工程控制面。它不帮你写代码更快，它帮你<b>证明</b>流程真的走过了。
+        九阶段环路，每个阶段的状态是从磁盘上的产物推导出来的，不是点出来的；每个 gate 的批准只能追加进日志，改不了。
+        所以它永远不会变成第二个和现实不一致的看板 —— 它甚至在你自己的仓库里找出过一处"没做设计就直接开了票"的真实缺口，而且只是报告，没有替你抹平。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="card" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+      <div>
+        <h3 style="margin-bottom:4px">两分钟演示，不需要任何凭证</h3>
+        <p class="muted" style="margin:0;font-size:13.5px">脚本化 agent 跑完整流程；它写的每个字都会标明自己是 demo，不会被误当成真实会话。</p>
+      </div>
+      <div style="font-family:var(--mono);font-size:13px;background:#1d1d1f;color:#e8e8ed;padding:12px 16px;border-radius:10px;white-space:nowrap">
+        npm install<br>
+        npm run <span style="color:#7ee2a8">serve:demo</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Governance · governance-control-plane 0.1.0 · experimental</span>
+    <span>README.md · docs/decisions.md · docs/adr/0001–0006 · HANDOVER.md</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "governance-control-plane",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local control plane for driving an effort through the nine-stage SDLC loop, with gates that record decisions instead of mutating state.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "tsc -p tsconfig.json && node --test \"dist/test/*.test.js\" \"test/*.test.mjs\" && npm run test:web && npm run test:i18n && npm run test:e2e && npm run test:demo",
+    "test:only": "node --test \"dist/test/*.test.js\" \"test/*.test.mjs\"",
+    "test:web": "python tools/check-web.py",
+    "test:i18n": "node tools/check-i18n.mjs",
+    "serve": "npm run build && node dist/src/cli.js serve",
+    "scan": "npm run build && node dist/src/cli.js scan",
+    "advance": "npm run build && node dist/src/cli.js advance",
+    "test:e2e": "node tools/e2e-session.mjs",
+    "test:demo": "node tools/e2e-demo.mjs",
+    "serve:demo": "tsc -p tsconfig.json && node dist/src/cli.js serve --demo"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

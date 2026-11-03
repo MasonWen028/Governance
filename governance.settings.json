@@ -1,0 +1,118 @@
+{
+  "general": {
+    "startup": "portfolio",
+    "confirmDestructive": true,
+    "showCost": true,
+    "telemetry": true
+  },
+  "agents": {
+    "cli": "opencode",
+    "model": "inherit",
+    "maxParallel": 4,
+    "isolation": "worktree",
+    "copyRoot": "../.worktrees",
+    "timeoutMin": 30,
+    "retries": 1,
+    "pauseOnGate": true,
+    "roleModels": {},
+    "providers": {
+      "opencode": {
+        "enabled": true,
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "baseUrl": "",
+        "apiKeyEnv": "OPENCODE_API_KEY"
+      },
+      "claude": {
+        "enabled": false,
+        "provider": "anthropic",
+        "model": "",
+        "baseUrl": "",
+        "apiKeyEnv": "ANTHROPIC_API_KEY"
+      }
+    },
+    "roleAgents": {},
+    "transport": "cli",
+    "apiBase": "https://api.anthropic.com",
+    "apiModel": "claude-sonnet-4-5",
+    "apiKeyEnv": "ANTHROPIC_API_KEY",
+    "apiMaxTokens": 8192
+  },
+  "skills": [
+    {
+      "id": "grill-with-docs",
+      "stage": "intake",
+      "enabled": true
+    },
+    {
+      "id": "grilling",
+      "stage": "ask",
+      "enabled": true
+    },
+    {
+      "id": "to-spec",
+      "stage": "spec",
+      "enabled": true
+    },
+    {
+      "id": "codebase-design",
+      "stage": "design",
+      "enabled": true
+    },
+    {
+      "id": "to-tickets",
+      "stage": "split",
+      "enabled": true
+    },
+    {
+      "id": "implement-spec",
+      "stage": "develop",
+      "enabled": true
+    },
+    {
+      "id": "code-review",
+      "stage": "review",
+      "enabled": true
+    },
+    {
+      "id": "",
+      "stage": "ship",
+      "enabled": true
+    },
+    {
+      "id": "retro",
+      "stage": "retro",
+      "enabled": true
+    }
+  ],
+  "skillPacks": [
+    {
+      "id": "design-stack",
+      "enabled": true,
+      "substitutions": {}
+    },
+    {
+      "id": "devops-suite",
+      "enabled": true,
+      "substitutions": {
+        "devops.audit": "agentic-actions-auditor",
+        "devops.deploy": "deployment-engineer",
+        "devops.workflows": "github-actions-author"
+      }
+    }
+  ],
+  "mcp": [],
+  "git": {
+    "branchTemplate": "feat/{ticket}",
+    "integrationTemplate": "integration/{project}",
+    "sign": true,
+    "draftPr": true,
+    "cleanup": true
+  },
+  "automation": {
+    "afk": true,
+    "autoMerge": false,
+    "maxWaitHours": 24,
+    "dailySummary": false
+  }
+}

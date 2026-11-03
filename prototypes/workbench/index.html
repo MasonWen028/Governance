@@ -1,0 +1,2994 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Governance Workbench</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.20/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.20/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.20/600.css">
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --accent:#0071e3; --accent-h:#0077ed;
+    --label:#1d1d1f; --label-2:#6e6e73; --label-3:#86868b; --label-4:#aeaeb2;
+    --sep:rgba(60,60,67,.16); --sep2:rgba(60,60,67,.09);
+    --fill:rgba(120,120,128,.10); --fill2:rgba(120,120,128,.16);
+    --chrome:#f6f6f8; --content:#ffffff;
+
+    --blue:#007aff;   --blue-t:rgba(0,122,255,.11);    --blue-d:#0062cc;
+    --green:#34c759;  --green-t:rgba(52,199,89,.14);   --green-d:#248a3d;
+    --orange:#ff9500; --orange-t:rgba(255,149,0,.16);  --orange-d:#b25000;
+    --red:#ff3b30;    --red-t:rgba(255,59,48,.12);     --red-d:#d70015;
+    --purple:#af52de; --purple-t:rgba(175,82,222,.13); --purple-d:#8944ab;
+    --teal:#30b0c7;   --teal-t:rgba(48,176,199,.15);   --teal-d:#0071a4;
+    --gray:#8e8e93;   --gray-t:rgba(120,120,128,.12);  --gray-d:#636366;
+
+    --sh1:0 .5px 1px rgba(0,0,0,.045), 0 1px 3px rgba(0,0,0,.04);
+    --sh2:0 1px 2px rgba(0,0,0,.05), 0 8px 22px rgba(0,0,0,.06);
+    --sh3:0 16px 48px rgba(0,0,0,.17), 0 3px 10px rgba(0,0,0,.08);
+
+    --r1:6px; --r2:9px; --r3:12px; --r4:16px;
+    --ease:cubic-bezier(.32,.72,0,1);
+    --sans:-apple-system,BlinkMacSystemFont,'Inter','SF Pro Text','Segoe UI Variable Text','Segoe UI','PingFang SC','Microsoft YaHei UI',system-ui,sans-serif;
+    --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--content);color:var(--label);overflow:hidden;
+    font:400 13px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;font-feature-settings:"cv11","ss01";
+  }
+  .app{height:100vh;display:flex;flex-direction:column;background:var(--content)}
+  /* Safety net: an inline SVG with no width/height renders at its default
+     300x150 replaced-element size and silently blows up its container.
+     Every icon here is fixed-size, so give every SVG a sane default and
+     override per component. Never remove this. */
+  svg{width:16px;height:16px;flex:0 0 auto}
+  .shell{flex:1;display:flex;min-height:0}
+
+  .menubar{flex:0 0 28px;display:flex;align-items:center;padding:0 8px;position:relative;z-index:40;
+    background:rgba(246,246,248,.84);border-bottom:.5px solid var(--sep);user-select:none;
+    backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
+  .mb-app{font-size:13px;font-weight:600;letter-spacing:-.012em;padding:0 12px 0 6px;color:var(--label)}
+  .mtitle{font-size:13px;color:var(--label);padding:2px 10px;border-radius:5px;cursor:default;
+    transition:background .12s var(--ease),color .12s var(--ease)}
+  .mtitle:hover{background:rgba(0,0,0,.06)}
+  .mtitle.open{background:var(--accent);color:#fff}
+  .extras{margin-left:auto;display:flex;align-items:center;gap:15px;font-size:12px;
+    color:var(--label-2);font-variant-numeric:tabular-nums}
+  .extras .x{display:flex;align-items:center;gap:5px}
+  .extras .x svg{width:12px;height:12px;flex:0 0 12px}
+  .langchip{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;
+    padding:1px 8px;border-radius:99px;background:var(--fill);color:var(--label-2);cursor:pointer;
+    letter-spacing:.01em;transition:background .14s var(--ease),color .14s var(--ease)}
+  .langchip:hover{background:var(--fill2);color:var(--label)}
+
+  .menu{position:absolute;top:26px;min-width:252px;padding:5px;display:none;z-index:41;
+    background:rgba(255,255,255,.92);border:.5px solid rgba(0,0,0,.09);border-radius:8px;
+    box-shadow:0 12px 36px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.07);
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
+  .menu.on{display:block;animation:pop .14s var(--ease)}
+  .mitem{display:flex;align-items:center;gap:8px;padding:4px 9px;border-radius:5px;font-size:13px;
+    color:var(--label);white-space:nowrap;position:relative}
+  .mitem:not(.dis):hover{background:var(--accent);color:#fff}
+  .mitem.dis{color:var(--label-4)}
+  .mitem .mc{width:13px;flex:0 0 13px;font-size:11.5px}
+  .mitem .ml{flex:1;overflow:hidden;text-overflow:ellipsis}
+  .mitem .mk{color:var(--label-3);font-size:12.5px;letter-spacing:.03em}
+  .mitem .arw{color:var(--label-4);font-size:10px;margin-left:6px}
+  .mitem:not(.dis):hover .mk,.mitem:not(.dis):hover .arw{color:rgba(255,255,255,.88)}
+  .msep{height:.5px;background:var(--sep);margin:5px 9px}
+  .mitem.has-sub>.menu{top:-5px;left:100%;margin-left:3px}
+  .mitem.has-sub:not(.dis):hover>.menu{display:block}
+
+  .toolbar{flex:0 0 52px;display:flex;align-items:center;gap:12px;padding:0 16px;
+    background:var(--chrome);border-bottom:.5px solid var(--sep);user-select:none;position:relative}
+  .iconbtn{width:28px;height:28px;border:0;background:transparent;border-radius:var(--r1);
+    color:var(--label-2);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:background .16s var(--ease),color .16s var(--ease)}
+  .iconbtn:hover{background:var(--fill);color:var(--label)}
+  .iconbtn svg{width:17px;height:17px}
+  .sp{flex:1}
+  .search{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;width:236px;
+    background:var(--fill);border-radius:var(--r2);color:var(--label-3);font-size:12.5px;
+    border:.5px solid transparent;transition:all .18s var(--ease)}
+  .search:hover{background:var(--fill2)}
+  .search svg{width:13px;height:13px;flex:0 0 13px}
+
+  /* Breadcrumb: portfolio and project scopes must occupy the SAME height.
+     Fixed 28px row + fixed-height pills, horizontal padding only, line-height 1. */
+  .crumbs{display:flex;align-items:center;gap:2px;min-width:0;height:28px;flex:0 1 auto}
+  .crumb-btn,.crumb-to,.crumb-last{display:flex;align-items:center;gap:7px;height:28px;
+    box-sizing:border-box;padding:0 10px;border-radius:7px;font-size:13.5px;line-height:1;
+    white-space:nowrap;border:.5px solid transparent;flex:0 0 auto;
+    transition:background .14s var(--ease),border-color .14s var(--ease),color .14s var(--ease)}
+  .crumb-btn{color:var(--label);font-weight:600;letter-spacing:-.012em;background:var(--fill);
+    cursor:pointer}
+  .crumb-btn:hover{background:var(--fill2);border-color:var(--sep)}
+  .crumb-to{color:var(--label-2);cursor:pointer}
+  .crumb-to:hover{background:var(--fill);color:var(--label)}
+  .crumb-last{color:var(--label);font-weight:600;letter-spacing:-.012em;background:var(--fill);
+    cursor:pointer;min-width:0}
+  .crumb-last:hover{background:var(--fill2);border-color:var(--sep)}
+  .crumb-last span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .crumb-btn svg,.crumb-to svg,.crumb-last svg{width:11px;height:11px;flex:0 0 11px;
+    color:var(--label-3)}
+  .crumb-sep{display:flex;align-items:center;height:28px;color:var(--label-4);font-size:11px;
+    line-height:1;flex:0 0 auto}
+  .crumb-sub{font-size:11.5px;line-height:1;color:var(--label-3);margin-left:8px;min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
+
+  .projsw{position:absolute;top:46px;left:14px;min-width:302px;padding:5px;display:none;z-index:39;
+    background:rgba(255,255,255,.94);border:.5px solid rgba(0,0,0,.09);border-radius:9px;
+    box-shadow:0 14px 40px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.07);
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
+  .projsw.on{display:block;animation:pop .15s var(--ease)}
+  .switem{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;font-size:13px}
+  .switem:hover{background:var(--fill)}
+  .switem.on{background:var(--blue-t)}
+  .switem .sw-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .switem .sw-mt{font-size:11px;color:var(--label-3);font-family:var(--mono)}
+  .switem .chk{color:var(--accent);font-size:11px;width:12px;flex:0 0 12px}
+
+  .main-col{flex:1;display:flex;flex-direction:column;min-width:0}
+  .cols{flex:1;display:flex;min-height:0}
+
+  .sidebar{flex:0 0 244px;background:var(--chrome);border-right:.5px solid var(--sep);
+    display:flex;flex-direction:column;min-height:0;transition:margin-left .28s var(--ease)}
+  .sidebar.collapsed{margin-left:-244px}
+  .sb-scroll{flex:1;overflow-y:auto;padding:8px 10px 12px;min-height:0}
+  .sec{font-size:11px;font-weight:600;color:var(--label-3);letter-spacing:.01em;
+    padding:12px 8px 6px;user-select:none}
+  .sec:first-child{padding-top:2px}
+  .pitem{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r1);
+    cursor:pointer;transition:background .14s var(--ease)}
+  .pitem:hover{background:var(--fill)}
+  .pitem.on{background:var(--fill2)}
+  .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+  .dot.run{background:var(--blue)} .dot.blk{background:var(--red)}
+  .dot.ok{background:var(--green)} .dot.idle{background:#c7c7cc}
+  .pitem .nm{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pitem.on .nm{font-weight:500}
+  .cnt{font-size:10.5px;font-weight:600;color:var(--red-d);background:var(--red-t);
+    border-radius:99px;padding:1px 6px;min-width:18px;text-align:center}
+  .meta{padding:6px 8px;font-size:11.5px;color:var(--label-2);line-height:1.85}
+  .meta .mono{font-family:var(--mono);font-size:11px;color:var(--label-2)}
+
+  .content{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--content)}
+  .chead{flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:20px 24px 14px;
+    border-bottom:.5px solid var(--sep2)}
+  .chead h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.022em;flex:1;min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .seg{display:flex;gap:2px;padding:2px;background:var(--fill);border-radius:10px;flex:0 0 auto}
+  .segbtn{position:relative;border:0;background:transparent;font:inherit;font-size:12.5px;
+    font-weight:500;color:var(--label-2);padding:5px 12px;border-radius:8px;cursor:pointer;
+    transition:all .18s var(--ease);font-family:inherit}
+  .segbtn:hover{color:var(--label)}
+  .segbtn.on{background:#fff;color:var(--label);box-shadow:0 .5px 1px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.07)}
+  .segdot{position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+  .cbody{flex:1;overflow-y:auto;padding:20px 24px 28px}
+
+  .card{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);box-shadow:var(--sh1);
+    margin-bottom:16px;overflow:hidden}
+  .card>h3{margin:0;padding:13px 16px;font-size:13px;font-weight:600;letter-spacing:-.005em;
+    display:flex;align-items:center;gap:9px;border-bottom:.5px solid var(--sep2)}
+  .card>.bd{padding:16px}
+
+  .pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;
+    border-radius:var(--r1);padding:2px 7px;white-space:nowrap}
+  .p-blue{background:var(--blue-t);color:var(--blue-d)}
+  .p-green{background:var(--green-t);color:var(--green-d)}
+  .p-orange{background:var(--orange-t);color:var(--orange-d)}
+  .p-red{background:var(--red-t);color:var(--red-d)}
+  .p-purple{background:var(--purple-t);color:var(--purple-d)}
+  .p-teal{background:var(--teal-t);color:var(--teal-d)}
+  .p-gray{background:var(--gray-t);color:var(--gray-d)}
+
+  .btn{font:inherit;font-size:12.5px;font-weight:500;border-radius:var(--r2);padding:5px 13px;
+    cursor:pointer;border:.5px solid rgba(0,0,0,.11);background:#fff;color:var(--label);
+    box-shadow:0 .5px 1px rgba(0,0,0,.04);font-family:inherit;
+    transition:background .14s var(--ease),transform .12s var(--ease),border-color .14s var(--ease)}
+  .btn:hover{background:#fafafa}
+  .btn:active{transform:scale(.975)}
+  .btn:disabled{opacity:.42;cursor:default;transform:none}
+  .btn-p{background:var(--accent);border-color:transparent;color:#fff;
+    box-shadow:0 1px 3px rgba(0,113,227,.32)}
+  .btn-p:hover{background:var(--accent-h)}
+
+  .split{display:grid;grid-template-columns:248px minmax(0,1fr);gap:16px;align-items:start}
+  .rail{display:flex;flex-direction:column;gap:1px}
+  .stage{display:flex;gap:10px;padding:7px 9px;border-radius:var(--r2);cursor:pointer;
+    transition:background .14s var(--ease)}
+  .stage:hover{background:var(--fill)}
+  .stage.on{background:var(--fill2)}
+  .idx{width:20px;height:20px;flex:0 0 20px;border-radius:50%;font-size:10.5px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;background:var(--fill2);color:var(--label-2)}
+  .stage.done .idx{background:var(--green-t);color:var(--green-d)}
+  .stage.active .idx{background:var(--accent);color:#fff}
+  .stage.blocked .idx{background:var(--red-t);color:var(--red-d)}
+  .stage .nm{font-size:12.5px;font-weight:500;line-height:1.34;letter-spacing:-.005em}
+  .stage .sk{font-size:11px;color:var(--label-3);line-height:1.45;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+  .stage.pending .nm{color:var(--label-3);font-weight:400}
+  .gf{color:var(--orange);margin-left:3px;font-size:10px}
+
+  .drow{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:.5px solid var(--sep2)}
+  .drow:first-child{padding-top:2px}
+  .drow:last-child{border-bottom:0;padding-bottom:2px}
+  .ibadge{width:26px;height:26px;flex:0 0 26px;border-radius:8px;display:flex;align-items:center;
+    justify-content:center}
+  .ibadge svg{width:15px;height:15px}
+  .dl{font-size:11px;font-weight:600;color:var(--label-3);margin-bottom:3px;letter-spacing:.01em}
+  .dv{font-size:12.5px;color:var(--label-2);line-height:1.6}
+  .dv b{color:var(--label);font-weight:600}
+  .dv .mono{font-family:var(--mono);font-size:11.5px}
+
+  .dhead{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+  .dhead .nm{font-size:14px;font-weight:600;letter-spacing:-.012em}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--label-2);margin-bottom:16px}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2.5px;margin-right:5px}
+
+  .board{display:grid;grid-template-columns:repeat(5,minmax(168px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
+  .col{display:flex;flex-direction:column;gap:10px;min-width:168px}
+  .colhead{font-size:10.5px;font-weight:600;color:var(--label-4);padding-left:3px;letter-spacing:.02em}
+  .tcard{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);padding:11px 12px;
+    box-shadow:var(--sh1);transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
+  .tcard:hover{transform:translateY(-1px);box-shadow:var(--sh2)}
+  .tcard.blocked{background:#fafafa;box-shadow:none}
+  .tcard.blocked:hover{transform:none;box-shadow:none}
+  .th{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .tid{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--label-3)}
+  .th .pill{margin-left:auto}
+  .ttl{font-size:12.5px;font-weight:500;line-height:1.44;margin-bottom:9px;letter-spacing:-.005em}
+  .tcard.blocked .ttl{color:var(--label-2);font-weight:400}
+  .segs{display:flex;gap:3px;margin-bottom:8px}
+  .segs i{height:4px;flex:1;border-radius:2px;background:rgba(120,120,128,.16)}
+  .tcard.done .segs i{background:var(--green)}
+  .tcard.prog .segs i.on{background:var(--blue)}
+  .tcard.ready .segs i.on{background:var(--orange)}
+  .dep{font-size:11px;color:var(--label-3)}
+
+  .gate{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);padding:14px;
+    margin-bottom:12px;box-shadow:var(--sh1);cursor:pointer;
+    transition:border-color .16s var(--ease),box-shadow .16s var(--ease),transform .18s var(--ease)}
+  .gate:hover{transform:translateY(-1px);box-shadow:var(--sh2)}
+  .gate.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.14),var(--sh1)}
+  .gh{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .gicon{width:24px;height:24px;flex:0 0 24px;border-radius:7px;display:inline-flex;
+    align-items:center;justify-content:center}
+  .gicon svg{width:14px;height:14px;flex:0 0 14px}
+  .gh .nm{font-size:13px;font-weight:600;letter-spacing:-.005em;flex:1;min-width:0}
+  .gb{font-size:12.5px;color:var(--label-2);line-height:1.62;margin-bottom:11px}
+  .gmeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .gbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .done-gate{opacity:.45;pointer-events:none}
+
+  .kv{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--sep2);
+    font-size:12.5px}
+  .kv:last-child{border-bottom:0}
+  .kv .k{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kv .v{color:var(--label-3);font-size:11.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .sdot{width:7px;height:7px;border-radius:50%;flex:0 0 7px}
+  .sdot.ok{background:var(--green)} .sdot.bad{background:var(--red)} .sdot.warn{background:var(--orange)}
+  .sub{font-size:11px;font-weight:600;color:var(--label-3);margin:18px 0 4px;letter-spacing:.01em}
+  .sub:first-child{margin-top:0}
+  .log{font-size:12px;color:var(--label-2);line-height:1.9;margin-top:6px}
+  .log b{font-weight:600;color:var(--label);font-variant-numeric:tabular-nums;margin-right:8px}
+
+  table.audit{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.audit th{text-align:left;font-weight:600;color:var(--label-3);font-size:10.5px;
+    letter-spacing:.02em;padding:9px 12px;border-bottom:.5px solid var(--sep);white-space:nowrap}
+  table.audit td{padding:11px 12px;border-bottom:.5px solid var(--sep2);color:var(--label-2)}
+  table.audit tr:last-child td{border-bottom:0}
+  table.audit td:first-child{color:var(--label);font-weight:500}
+  table.audit .mono{font-family:var(--mono);font-size:11px}
+
+  .inspector{flex:0 0 342px;background:var(--chrome);border-left:.5px solid var(--sep);
+    overflow-y:auto;padding:16px 14px}
+  .ihead{display:flex;align-items:center;gap:8px;padding:0 2px 12px}
+  .ihead h2{margin:0;font-size:14px;font-weight:600;letter-spacing:-.012em;flex:1}
+  .field{margin-bottom:14px}
+  .field>label{display:block;font-size:11px;font-weight:600;color:var(--label-3);margin-bottom:6px;
+    letter-spacing:.01em}
+  .field input[type=text],.field textarea,.field select{width:100%;font:inherit;font-size:12.5px;
+    color:var(--label);background:#fff;border:.5px solid rgba(0,0,0,.12);border-radius:var(--r2);
+    padding:6px 10px;outline:none;font-family:inherit;
+    transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+  .field textarea{min-height:60px;resize:vertical;line-height:1.55}
+  .field select{appearance:none;-webkit-appearance:none;padding-right:28px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.6 6 7.6 9 4.6' fill='none' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 9px center}
+  .field input:focus,.field textarea:focus,.field select:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.16)}
+  .hint{font-size:10.5px;color:var(--label-3);margin-top:5px;line-height:1.5}
+  .checks{display:flex;flex-direction:column;gap:6px}
+  .checks label{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--label);
+    background:#fff;border:.5px solid var(--sep);border-radius:var(--r2);padding:7px 10px;cursor:pointer;
+    transition:border-color .16s var(--ease),background .16s var(--ease)}
+  .checks label:hover{border-color:rgba(0,0,0,.2)}
+  .checks input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;margin:0;flex:0 0 14px}
+  .sw{display:flex;align-items:center;gap:10px;font-size:12.5px;cursor:pointer}
+  .sw input{position:absolute;opacity:0;pointer-events:none}
+  .sw i{width:40px;height:24px;flex:0 0 40px;border-radius:12px;background:rgba(120,120,128,.30);
+    position:relative;transition:background .22s var(--ease)}
+  .sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.04);
+    transition:transform .22s var(--ease)}
+  .sw input:checked+i{background:var(--green)}
+  .sw input:checked+i::after{transform:translateX(16px)}
+
+  .statusbar{flex:0 0 26px;display:flex;align-items:center;gap:16px;padding:0 16px;
+    background:var(--chrome);border-top:.5px solid var(--sep);font-size:11px;color:var(--label-3);
+    user-select:none}
+  .statusbar .sp{flex:1}
+  .statusbar b{font-weight:600;color:var(--label-2);font-variant-numeric:tabular-nums}
+
+  .toolbar2{position:relative}
+  .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);padding:14px 16px;
+    box-shadow:var(--sh1)}
+  .tile .tl{font-size:11px;font-weight:600;color:var(--label-3);margin-bottom:7px;letter-spacing:.01em}
+  .tile .tv{font-size:26px;font-weight:600;letter-spacing:-.032em;line-height:1.05;
+    font-variant-numeric:tabular-nums}
+  .tile .tu{font-size:13px;font-weight:500;color:var(--label-3);margin-left:3px}
+  .tile .tn{font-size:11px;color:var(--label-3);margin-top:6px}
+
+  .ptbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ptbl th{text-align:left;font-weight:600;color:var(--label-3);font-size:10.5px;letter-spacing:.02em;
+    padding:9px 12px;border-bottom:.5px solid var(--sep);white-space:nowrap}
+  .ptbl td{padding:13px 12px;border-bottom:.5px solid var(--sep2);vertical-align:middle}
+  .ptbl tbody tr{cursor:pointer;transition:background .14s var(--ease)}
+  .ptbl tbody tr:hover{background:rgba(120,120,128,.055)}
+  .ptbl tbody tr:last-child td{border-bottom:0}
+  .pnm{display:flex;align-items:center;gap:10px;min-width:0}
+  .pnm .txt{min-width:0}
+  .pnm .n1{font-size:13px;font-weight:500;letter-spacing:-.005em;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .pnm .n2{font-size:10.5px;color:var(--label-3);font-family:var(--mono);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .mini{display:flex;gap:2px;width:140px}
+  .mini i{height:6px;flex:1;border-radius:2px;background:rgba(120,120,128,.17)}
+  .mini i.done{background:var(--green)}
+  .mini i.active{background:var(--blue)}
+  .mini i.blocked{background:var(--red)}
+  .tnum{font-variant-numeric:tabular-nums;color:var(--label-2)}
+
+  .tl{overflow-x:auto;margin:0 -4px;padding:0 4px}
+  .tl-inner{min-width:660px}
+  .tlhead,.tlrow{display:grid;grid-template-columns:196px minmax(0,1fr);align-items:center;gap:14px}
+  .tlhead{padding-bottom:8px}
+  .tlhead .hcell{font-size:10.5px;font-weight:600;color:var(--label-4);text-align:center;
+    letter-spacing:.02em}
+  .tlrow{padding:9px 0;border-top:.5px solid var(--sep2);cursor:pointer;
+    transition:background .14s var(--ease)}
+  .tlrow:hover{background:rgba(120,120,128,.045)}
+  .tlname{display:flex;align-items:center;gap:8px;min-width:0;font-size:12.5px;font-weight:500}
+  .tlname span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tltrack{display:grid;grid-template-columns:repeat(9,1fr);gap:2px}
+  .tltrack i{height:22px;border-radius:4px;background:rgba(120,120,128,.12);
+    transition:transform .16s var(--ease)}
+  .tlrow:hover .tltrack i{transform:scaleY(1.06)}
+  .tltrack i.done{background:var(--green-t);border:.5px solid rgba(52,199,89,.5)}
+  .tltrack i.active{background:var(--blue);box-shadow:0 1px 4px rgba(0,122,255,.36)}
+  .tltrack i.blocked{background:var(--red-t);border:.5px solid rgba(255,59,48,.5)}
+  .tllegend{display:flex;gap:15px;font-size:11.5px;color:var(--label-2);margin-top:16px;flex-wrap:wrap}
+  .tllegend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+
+  .feed{display:flex;flex-direction:column}
+  .frow{display:flex;gap:13px;padding:11px 0;border-bottom:.5px solid var(--sep2);align-items:flex-start}
+  .frow:last-child{border-bottom:0}
+  .ftime{font-family:var(--mono);font-size:11px;color:var(--label-3);flex:0 0 40px;padding-top:2px;
+    font-variant-numeric:tabular-nums}
+  .fdot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;margin-top:7px}
+  .fbody{flex:1;min-width:0;font-size:12.5px;color:var(--label-2);line-height:1.55}
+  .fbody b{color:var(--label);font-weight:500}
+  .fproj{font-size:10.5px;color:var(--label-3);font-family:var(--mono);margin-top:3px}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:center;
+    justify-content:center;z-index:50;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+  .overlay.on{display:flex;animation:fade .2s var(--ease)}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+  .sheet{background:#fff;border-radius:var(--r4);width:556px;max-height:86vh;overflow-y:auto;
+    box-shadow:var(--sh3);animation:pop .26s var(--ease)}
+  .sheet>header{position:sticky;top:0;background:rgba(255,255,255,.86);
+    backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+    padding:15px 18px;border-bottom:.5px solid var(--sep2);display:flex;align-items:center;gap:10px;z-index:1}
+  .sheet>header h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-.012em}
+  .sheet>header .x{margin-left:auto;border:0;background:var(--fill);color:var(--label-2);
+    width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;
+    display:flex;align-items:center;justify-content:center;transition:background .14s var(--ease)}
+  .sheet>header .x:hover{background:var(--fill2)}
+  .sheet .mb{padding:18px}
+  .sheet footer{padding:14px 18px;border-top:.5px solid var(--sep2);display:flex;gap:9px;
+    justify-content:flex-end;position:sticky;bottom:0;background:rgba(255,255,255,.86);
+    backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
+
+  .toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%) translateY(6px);
+    background:rgba(28,28,30,.88);backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    color:#fff;padding:9px 17px;border-radius:99px;font-size:12.5px;font-weight:500;
+    opacity:0;transition:opacity .2s var(--ease),transform .24s var(--ease);
+    pointer-events:none;z-index:60;box-shadow:var(--sh2)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{padding:34px 16px;text-align:center;color:var(--label-3);font-size:12.5px;line-height:1.7}
+
+  /* ================= concept-init wizard ================= */
+  .wizard{position:fixed;inset:0;z-index:70;display:none;flex-direction:column;
+    background:var(--content)}
+  .wizard.on{display:flex}
+  .wz-top{flex:0 0 52px;display:flex;align-items:center;gap:14px;padding:0 18px;
+    background:var(--chrome);border-bottom:.5px solid var(--sep);flex:0 0 52px}
+  .wz-back{display:flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:7px;
+    background:var(--fill);border:.5px solid transparent;color:var(--label);font-size:12.5px;
+    font-weight:500;cursor:pointer;font-family:inherit;
+    transition:background .14s var(--ease),border-color .14s var(--ease)}
+  .wz-back:hover{background:var(--fill2);border-color:var(--sep)}
+  .wz-back svg{width:11px;height:11px;flex:0 0 11px;color:var(--label-3)}
+  .wz-eyebrow{display:flex;align-items:baseline;gap:8px;min-width:0}
+  .wz-eyebrow b{font-size:13.5px;font-weight:600;letter-spacing:-.012em}
+  .wz-eyebrow span{font-size:11.5px;color:var(--label-3)}
+  .wz-sp{flex:1}
+  .wz-prog{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--label-3);
+    font-variant-numeric:tabular-nums}
+  .wz-bar{width:132px;height:5px;border-radius:3px;background:var(--fill2);overflow:hidden}
+  .wz-bar i{display:block;height:100%;background:var(--accent);border-radius:3px;
+    transition:width .3s var(--ease)}
+
+  .wz-body{flex:1;display:flex;min-height:0}
+  .wz-rail{flex:0 0 212px;background:var(--chrome);border-right:.5px solid var(--sep);
+    padding:14px 10px;overflow-y:auto}
+  .wz-step{display:flex;gap:10px;padding:8px 9px;border-radius:var(--r2);cursor:pointer;
+    transition:background .14s var(--ease)}
+  .wz-step:hover{background:var(--fill)}
+  .wz-step.on{background:var(--fill2)}
+  .wz-n{width:22px;height:22px;flex:0 0 22px;border-radius:50%;font-size:11px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;background:var(--fill2);color:var(--label-2)}
+  .wz-step.done .wz-n{background:var(--green-t);color:var(--green-d)}
+  .wz-step.on .wz-n{background:var(--accent);color:#fff}
+  .wz-step .wz-t{font-size:12.5px;font-weight:500;line-height:1.34}
+  .wz-step .wz-s{font-size:11px;color:var(--label-3);line-height:1.42}
+  .wz-step.todo .wz-t{color:var(--label-3);font-weight:400}
+
+  .wz-main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+  .wz-scroll{flex:1;overflow-y:auto;padding:24px 28px 12px}
+  .wz-wrap{max-width:660px;margin:0 auto}
+  .wz-h1{margin:0 0 8px;font-size:22px;font-weight:600;letter-spacing:-.024em;line-height:1.24}
+  .wz-lede{margin:0 0 22px;font-size:13px;color:var(--label-2);line-height:1.68;max-width:60ch}
+  .wz-foot{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:14px 28px;
+    border-top:.5px solid var(--sep2);background:var(--content)}
+  .wz-foot .wz-fw{max-width:660px;margin:0 auto;width:100%;display:flex;align-items:center;gap:10px}
+  .wz-foot .sp{flex:1}
+
+  .wz-ctx{flex:0 0 262px;background:var(--chrome);border-left:.5px solid var(--sep);
+    overflow-y:auto;padding:16px 14px}
+  .wz-ctxcard{margin-bottom:12px}
+  .wz-ctxcard>h4{margin:0 0 8px;font-size:11px;font-weight:600;color:var(--label-3);
+    letter-spacing:.01em;display:flex;align-items:center;gap:7px}
+  .wz-ctxcard>h4 span{margin-left:auto;font-weight:500;font-variant-numeric:tabular-nums}
+  .term{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:.5px solid var(--sep2);
+    font-size:12.5px}
+  .term:last-child{border-bottom:0}
+  .term b{font-weight:500;color:var(--label);flex:0 0 auto}
+  .term span{color:var(--label-3);font-size:11.5px;line-height:1.45}
+  .task{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:12px;
+    color:var(--label-2);line-height:1.5}
+  .spinner{width:11px;height:11px;flex:0 0 11px;border-radius:50%;margin-top:3px;
+    border:1.5px solid var(--fill2);border-top-color:var(--accent);
+    animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.spinner{animation:none}}
+
+  .wz-seed{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:14px;line-height:1.6;
+    color:var(--label);background:#fff;border:.5px solid rgba(0,0,0,.13);border-radius:var(--r3);
+    padding:14px 15px;outline:none;transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+  .wz-seed:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.16)}
+  .wz-seed::placeholder{color:var(--label-4)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 4px}
+  .chip-e{padding:5px 11px;border-radius:99px;background:var(--fill);color:var(--label-2);
+    font-size:12px;cursor:pointer;border:.5px solid transparent;font-family:inherit;
+    transition:background .14s var(--ease),color .14s var(--ease)}
+  .chip-e:hover{background:var(--fill2);color:var(--label)}
+
+  .opt{display:flex;gap:12px;align-items:flex-start;padding:14px 15px;border-radius:var(--r3);
+    border:.5px solid var(--sep);background:#fff;margin-bottom:10px;cursor:pointer;
+    box-shadow:var(--sh1);transition:border-color .16s var(--ease),box-shadow .16s var(--ease),
+    transform .18s var(--ease)}
+  .opt:hover{transform:translateY(-1px);box-shadow:var(--sh2)}
+  .opt.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.14),var(--sh1)}
+  .opt .rad{width:17px;height:17px;flex:0 0 17px;border-radius:50%;margin-top:2px;
+    border:1.5px solid var(--label-4);position:relative}
+  .opt.on .rad{border-color:var(--accent);background:var(--accent)}
+  .opt.on .rad::after{content:"";position:absolute;inset:3.5px;border-radius:50%;background:#fff}
+  .opt .ob{flex:1;min-width:0}
+  .opt .ot{font-size:13px;font-weight:500;line-height:1.46;margin-bottom:4px;letter-spacing:-.005em;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .opt .od{font-size:12.5px;color:var(--label-2);line-height:1.6}
+  .opt .oshape{margin-top:8px;padding-top:8px;border-top:.5px solid var(--sep2);
+    font-size:11.5px;color:var(--label-3);line-height:1.55}
+  .opt.other{border-style:dashed;box-shadow:none;background:#fcfcfb}
+  .opt.other:hover{box-shadow:none;transform:none;border-color:var(--label-4)}
+  .opt.other .rad{border-radius:4px}
+
+  .qc{border:.5px solid var(--sep);border-radius:var(--r3);background:#fff;margin-bottom:12px;
+    box-shadow:var(--sh1);overflow:hidden}
+  .qc-h{display:flex;align-items:flex-start;gap:11px;padding:14px 15px 12px}
+  .qnum{width:22px;height:22px;flex:0 0 22px;border-radius:7px;background:var(--fill2);
+    color:var(--label-2);font-size:11px;font-weight:600;display:flex;align-items:center;
+    justify-content:center;margin-top:1px}
+  .qc-q{flex:1;min-width:0}
+  .qc-t{font-size:13.5px;font-weight:600;letter-spacing:-.01em;line-height:1.4;margin-bottom:5px}
+  .qc-b{font-size:12.5px;color:var(--label-2);line-height:1.62}
+  .qc-why{margin-top:9px;padding-top:9px;border-top:.5px solid var(--sep2);font-size:11.5px;
+    color:var(--label-3);line-height:1.55;display:flex;align-items:flex-start;gap:6px}
+  .qc-why svg{width:11px;height:11px;flex:0 0 11px;margin-top:2.5px;color:var(--label-4)}
+  .qc-opts{padding:0 15px 14px;display:flex;flex-direction:column;gap:7px}
+  .qo{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border-radius:var(--r2);
+    border:.5px solid var(--sep);font-size:12.5px;line-height:1.5;cursor:pointer;
+    transition:border-color .14s var(--ease),background .14s var(--ease)}
+  .qo:hover{border-color:var(--label-4)}
+  .qo.on{border-color:var(--accent);background:var(--blue-t)}
+  .qo .rd{width:15px;height:15px;flex:0 0 15px;border-radius:50%;margin-top:1px;
+    border:1.5px solid var(--label-4);position:relative}
+  .qo.on .rd{border-color:var(--accent);background:var(--accent)}
+  .qo.on .rd::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#fff}
+  .qo .qt{flex:1;min-width:0;color:var(--label)}
+  .qo .rec{font-size:10.5px;font-weight:600;color:var(--accent);background:var(--blue-t);
+    border-radius:4px;padding:1px 6px;margin-left:7px;white-space:nowrap}
+  .qc-other{padding:0 15px 15px}
+  .qc-other input{width:100%;font:inherit;font-size:12.5px;padding:8px 11px;border-radius:var(--r2);
+    border:.5px solid var(--sep);outline:none;color:var(--label);background:#fff}
+  .qc-other input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.16)}
+  .qc-foot{display:flex;align-items:center;gap:8px;padding:9px 15px;background:var(--chrome);
+    border-top:.5px solid var(--sep2);font-size:11px;color:var(--label-3)}
+  .qc-foot svg{width:11px;height:11px;flex:0 0 11px}
+
+  .kind{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;
+    padding:2px 7px;border-radius:5px;white-space:nowrap}
+  .k-decision{background:var(--purple-t);color:var(--purple-d)}
+  .k-fact{background:var(--teal-t);color:var(--teal-d)}
+  .k-proto{background:var(--orange-t);color:var(--orange-d)}
+  .k-settled{background:var(--green-t);color:var(--green-d)}
+
+  .prd{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);overflow:hidden;
+    box-shadow:var(--sh1);margin-bottom:14px}
+  .prd>h4{margin:0;padding:11px 15px;font-size:11px;font-weight:600;color:var(--label-3);
+    letter-spacing:.01em;border-bottom:.5px solid var(--sep2);display:flex;align-items:center;gap:8px}
+  .prd>h4 span{margin-left:auto;font-weight:500}
+  .prd .pb{padding:14px 15px;font-size:12.5px;color:var(--label-2);line-height:1.7}
+  .prd .pb ol,.prd .pb ul{margin:0;padding-left:19px}
+  .prd .pb li{margin-bottom:5px}
+  .prd .pb li:last-child{margin-bottom:0}
+  .prd .pb b{color:var(--label);font-weight:600}
+  .seam{margin-top:11px;padding:11px 12px;border-radius:var(--r2);background:var(--teal-t);
+    color:var(--teal-d);font-size:12px;line-height:1.6}
+  .seam b{font-weight:600}
+
+  .wz-warn{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:var(--r2);
+    background:var(--orange-t);color:var(--orange-d);font-size:12px;line-height:1.6;
+    margin-bottom:18px}
+  .wz-warn svg{width:13px;height:13px;flex:0 0 13px;margin-top:2px}
+
+  /* ================= settings window ================= */
+  .settings{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.30);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+  .settings.on{display:flex;animation:fade .2s var(--ease)}
+  .set-win{width:min(940px,94vw);height:min(660px,88vh);background:var(--content);
+    border-radius:var(--r4);box-shadow:var(--sh3);display:flex;flex-direction:column;
+    overflow:hidden;animation:pop .26s var(--ease)}
+  .set-top{flex:0 0 52px;display:flex;align-items:center;gap:12px;padding:0 16px;
+    background:var(--chrome);border-bottom:.5px solid var(--sep)}
+  .set-top h2{margin:0;font-size:14px;font-weight:600;letter-spacing:-.012em}
+  .set-top .scope{font-size:11.5px;color:var(--label-3)}
+  .set-top .sp{flex:1}
+  .set-body{flex:1;display:flex;min-height:0}
+  .set-rail{flex:0 0 190px;background:var(--chrome);border-right:.5px solid var(--sep);
+    padding:10px 8px;overflow-y:auto}
+  .set-cat{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:var(--r1);
+    font-size:12.5px;color:var(--label);cursor:pointer;margin-bottom:1px;
+    transition:background .14s var(--ease)}
+  .set-cat:hover{background:var(--fill)}
+  .set-cat.on{background:var(--accent);color:#fff;font-weight:500}
+  .set-cat svg{width:14px;height:14px;flex:0 0 14px;opacity:.75}
+  .set-cat.on svg{opacity:1}
+  .set-main{flex:1;min-width:0;overflow-y:auto;padding:22px 26px 30px}
+  .set-sec{margin-bottom:26px}
+  .set-sec:last-child{margin-bottom:0}
+  .set-sec>h3{margin:0 0 5px;font-size:13.5px;font-weight:600;letter-spacing:-.012em}
+  .set-sec>.lede{margin:0 0 14px;font-size:12.5px;color:var(--label-2);line-height:1.65;max-width:70ch}
+  .set-hint{font-size:11px;color:var(--label-3);margin-top:5px;line-height:1.55;max-width:70ch}
+
+  .srow{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:.5px solid var(--sep2)}
+  .srow:last-child{border-bottom:0}
+  .srow .sbody{flex:1;min-width:0}
+  .srow .slabel{font-size:12.5px;font-weight:500;line-height:1.45}
+  .srow .sdesc{font-size:11.5px;color:var(--label-3);line-height:1.55;margin-top:3px;max-width:62ch}
+  .srow .sctl{flex:0 0 auto;display:flex;align-items:center;gap:8px}
+
+  .stepper{display:flex;align-items:center;border:.5px solid var(--sep);border-radius:var(--r2);
+    overflow:hidden;background:#fff}
+  .stepper button{width:26px;height:26px;border:0;background:#fff;color:var(--label-2);
+    font-size:14px;line-height:1;cursor:pointer;font-family:inherit;
+    transition:background .14s var(--ease),color .14s var(--ease)}
+  .stepper button:hover{background:var(--fill);color:var(--label)}
+  .stepper button:disabled{color:var(--label-4);cursor:default;background:#fff}
+  .stepper .val{min-width:38px;text-align:center;font-size:12.5px;font-weight:600;
+    font-variant-numeric:tabular-nums;border-left:.5px solid var(--sep);
+    border-right:.5px solid var(--sep);line-height:26px;background:#fff}
+
+  .slots{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+  .slot{flex:1 1 148px;min-width:148px;border:.5px solid var(--sep);border-radius:var(--r2);
+    padding:9px 10px;background:#fff;box-shadow:var(--sh1)}
+  .slot.busy{border-color:#B5D4F4;background:var(--blue-t)}
+  .slot .sk{font-size:10.5px;font-weight:600;color:var(--label-3);letter-spacing:.01em;
+    display:flex;align-items:center;gap:6px}
+  .slot.busy .sk{color:var(--blue-d)}
+  .slot .sb{font-family:var(--mono);font-size:11px;color:var(--label-2);margin-top:4px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .slot.busy .sb{color:var(--blue-d);font-weight:500}
+  .flowline{display:flex;align-items:center;gap:10px;margin-top:11px;flex-wrap:wrap;
+    font-size:11.5px;color:var(--label-3)}
+  .flowline .arrow{color:var(--label-4)}
+  .flowline code{font-family:var(--mono);font-size:11px;background:var(--fill);
+    padding:2px 7px;border-radius:5px;color:var(--label-2)}
+
+  table.st{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.st th{text-align:left;font-weight:600;color:var(--label-3);font-size:10.5px;
+    letter-spacing:.02em;padding:8px 10px;border-bottom:.5px solid var(--sep);white-space:nowrap}
+  table.st td{padding:10px;border-bottom:.5px solid var(--sep2);color:var(--label-2);
+    vertical-align:middle}
+  table.st tr:last-child td{border-bottom:0}
+  table.st td.n{color:var(--label);font-weight:500}
+  table.st .mono{font-family:var(--mono);font-size:11px}
+  .sw2{width:34px;height:20px;flex:0 0 34px;border-radius:10px;background:rgba(120,120,128,.30);
+    position:relative;cursor:pointer;border:0;padding:0;transition:background .22s var(--ease)}
+  .sw2::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .22s var(--ease)}
+  .sw2.on{background:var(--green)}
+  .sw2.on::after{transform:translateX(14px)}
+  .sw2:disabled{opacity:.4;cursor:default}
+  .mini-btn{border:.5px solid var(--sep);background:#fff;color:var(--label-2);font:inherit;
+    font-size:11.5px;padding:3px 9px;border-radius:var(--r1);cursor:pointer;
+    transition:background .14s var(--ease),color .14s var(--ease)}
+  .mini-btn:hover{background:var(--fill);color:var(--label)}
+  .mini-btn.danger:hover{background:var(--red-t);color:var(--red-d);border-color:var(--red-t)}
+
+  .keybox{font-family:var(--mono);font-size:11.5px;background:var(--fill);border-radius:6px;
+    padding:3px 8px;color:var(--label-2);letter-spacing:.06em}
+  .pool{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.2);border-radius:99px;border:3px solid transparent;
+    background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.32);background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="menubar" id="menubar"></nav>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <div class="main-col">
+      <div class="toolbar toolbar2">
+        <button class="iconbtn" id="sbToggle" title="sidebar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2.2"/><path d="M6.2 2.8v10.4"/></svg>
+        </button>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="sp"></div>
+        <div class="search" id="searchBox">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.2"/><path d="m10.2 10.2 3 3"/></svg>
+          <span id="searchLabel"></span>
+        </div>
+        <button class="iconbtn" id="inspToggle" title="inspector">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2.2"/><path d="M9.8 2.8v10.4"/></svg>
+        </button>
+        <div class="projsw" id="projsw"></div>
+      </div>
+
+      <div class="cols">
+        <main class="content">
+          <div class="chead">
+            <h1 id="bigTitle"></h1>
+            <div class="seg" id="seg"></div>
+          </div>
+          <div class="cbody" id="main"></div>
+        </main>
+        <aside class="inspector" id="inspector"></aside>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar" id="statusbar"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <header>
+      <h3 id="modalTitle"></h3>
+      <button class="x" onclick="closeModal()">✕</button>
+    </header>
+    <div class="mb">
+      <div class="field" id="mProjWrap" style="display:none">
+        <label id="mProjLabel"></label>
+        <select id="mProj"></select>
+      </div>
+      <div class="field">
+        <label id="mScopeLabel"></label>
+        <select id="mScope"></select>
+      </div>
+      <div class="field">
+        <label id="mNameLabel"></label>
+        <input type="text" id="mName">
+      </div>
+      <div class="field">
+        <label id="mOwnerLabel"></label>
+        <select id="mOwner"></select>
+        <div class="hint" id="mOwnerHint"></div>
+      </div>
+      <div class="field">
+        <label id="mMethodsLabel"></label>
+        <div class="checks" id="mMethods"></div>
+      </div>
+      <div class="field">
+        <label id="mFailLabel"></label>
+        <select id="mFail"></select>
+      </div>
+      <div class="field">
+        <label id="mBlockLabel"></label>
+        <label class="sw"><input type="checkbox" id="mBlock" checked><i></i><span id="mBlockText"></span></label>
+      </div>
+      <div class="field">
+        <label id="mNoteLabel"></label>
+        <textarea id="mNote"></textarea>
+      </div>
+    </div>
+    <footer>
+      <button class="btn" id="mCancel" onclick="closeModal()"></button>
+      <button class="btn btn-p" id="mCreate" onclick="createGate()"></button>
+    </footer>
+  </div>
+</div>
+
+<div class="wizard" id="wizard">
+  <div class="wz-top">
+    <button class="wz-back" id="wzExit"></button>
+    <div class="wz-eyebrow"><b id="wzEyebrow"></b><span id="wzStages"></span></div>
+    <div class="wz-sp"></div>
+    <div class="wz-prog">
+      <span id="wzStepN"></span>
+      <span class="wz-bar"><i id="wzBar" style="width:0"></i></span>
+      <span id="wzPct"></span>
+    </div>
+  </div>
+  <div class="wz-body">
+    <nav class="wz-rail" id="wzRail"></nav>
+    <main class="wz-main">
+      <div class="wz-scroll"><div class="wz-wrap" id="wzMain"></div></div>
+      <div class="wz-foot"><div class="wz-fw" id="wzFoot"></div></div>
+    </main>
+    <aside class="wz-ctx" id="wzCtx"></aside>
+  </div>
+</div>
+
+<div class="settings" id="settings">
+  <div class="set-win">
+    <div class="set-top">
+      <h2 id="setTitle"></h2>
+      <span class="scope" id="setScope"></span>
+      <div class="sp"></div>
+      <span style="font-size:11px;color:var(--label-3)" id="setApplies"></span>
+      <button class="btn btn-p" id="setDone"></button>
+    </div>
+    <div class="set-body">
+      <nav class="set-rail" id="setRail"></nav>
+      <main class="set-main" id="setMain"></main>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="i18n.js"></script>
+<script>
+const I18N=GovernanceI18n;
+I18N.init();
+
+function t(k,p){return I18N.t(k,p);}
+function L(v){return I18N.pick(v);}
+
+const STAGE_KEYS=['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
+const METHOD_KEYS=['auto','self','lateral','cross','adversarial','signoff'];
+const ROLE_KEYS=['po','tech','qa','ops','security','client'];
+const FAIL_KEYS=['rework','lower','accept','escalate'];
+const STATUS_KEY={'done':'done','pending':'pending','running':'running','todo':'todo','rework':'rework'};
+
+const STATE={scope:'portfolio',project:'camera',view:'pipeline',pview:'overview',stage:1,gate:null,afk:false,sw:false};
+
+function roleName(k){return k?t('role.'+k):'—';}
+function btnLabel(b){return b.labelKey?t(b.labelKey):L(b.label);}
+function btnMsg(b){return b.msgKey?t(b.msgKey):L(b.msg);}
+function gateTrigger(g){return g.triggerKey?t(g.triggerKey):L(g.trigger);}
+function methodList(keys,short){
+  if(!keys||!keys.length)return '—';
+  return keys.map(k=>t('m.'+k+(short?'Short':''))).join(' + ');
+}
+function statusText(s){return t('st.status.'+s);}
+
+const VIEWNAME={pipeline:'view.pipeline',board:'view.board',inbox:'view.inbox',
+  releases:'view.releases',records:'view.records'};
+const PVIEWNAME={overview:'view.portfolio',timeline:'view.roadmap',activity:'view.activity'};
+
+const ICON={
+  input:'<path d="M8 2.6v7.2m0 0 2.9-2.9M8 9.8 5.1 6.9"/><path d="M3.2 13.2h9.6"/>',
+  action:'<path d="M3.4 4.6h9.2M3.4 8h9.2M3.4 11.4h6"/>',
+  artifact:'<path d="M8 2.8 12.9 5.4v5.2L8 13.2 3.1 10.6V5.4z"/><path d="M8 8.1 12.9 5.4M8 8.1 3.1 5.4M8 8.1v5.1"/>',
+  gate:'<path d="M8 2.4 12.6 4.3v4.2c0 2.6-1.9 4.5-4.6 5.1-2.7-.6-4.6-2.5-4.6-5.1V4.3z"/>',
+  check:'<path d="M3.4 8.4 6.4 11.4 12.6 4.8"/>',
+  clock:'<circle cx="8" cy="8" r="5.4"/><path d="M8 5.2V8l1.9 1.3"/>',
+  bolt:'<path d="M8.8 2.4 4.2 8.8h3.1l-.6 4.8 4.6-6.4H8.2z"/>',
+  wrench:'<path d="M10.9 2.6a3.4 3.4 0 0 0-4.4 4.3L2.9 10.5l2.6 2.6 3.6-3.6a3.4 3.4 0 0 0 4.3-4.4l-2 2-1.6-1.6z"/>'
+};
+function svg(p){return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';}
+
+/* ==================================================================
+   Concept-init wizard (stages 1-3 of the SDLC)
+   Mirrors the /grilling primitive: a design tree worked in rounds, the
+   frontier being every question whose prerequisites are already settled.
+   Facts are the agent's job; decisions are the user's. Questions that
+   cannot be settled by talking graduate into prototype tickets.
+   ================================================================== */
+const WIZ_STEPS=['seed','frame','destination','rounds','uncertainty','prd'];
+
+const WIZ={
+  frames:[
+    {id:'tool', t:{en:'A local tool one person can run',zh:'一个人就能跑的本地工具'},
+     d:{en:'Single host, one camera, a small set of tunable rules. Nothing to operate.',
+        zh:'单机、单路摄像头、少量可调规则。没有需要运维的东西。'},
+     shape:{en:'one binary · local storage · no accounts',zh:'单个可执行文件 · 本地存储 · 无账号体系'}},
+    {id:'platform', t:{en:'A multi-source video analysis platform',zh:'一个多源视频分析平台'},
+     d:{en:'Many feeds, a rule engine, pluggable detectors, a tenant model.',
+        zh:'多路接入、规则引擎、可插拔检测器、多租户模型。'},
+     shape:{en:'ingest layer · detector plugins · scheduler · multi-tenant data',zh:'接入层 · 检测器插件 · 调度器 · 多租户数据'}},
+    {id:'plugin', t:{en:'An intelligence layer on top of an existing recorder',zh:'现有录像系统上的智能插件层'},
+     d:{en:'Leave the recorder alone. Add analysis and notification beside it.',
+        zh:'不动现有录像系统，在它旁边加分析和通知。'},
+     shape:{en:'read-only integration · side pipeline · no video storage of its own',zh:'只读集成 · 旁路管线 · 不自建视频存储'}}
+  ],
+  destKinds:[
+    {id:'spec', t:{en:'A spec I can iterate on',zh:'一份可以迭代的规格'},
+     d:{en:'Get the thinking straight first, build afterwards.',zh:'先把事情想清楚，之后再建。'}},
+    {id:'prototype', t:{en:'Something runnable, to see if it holds up',zh:'一个能跑的东西，看它成不成立'},
+     d:{en:'Prove the risky part before committing to a design.',zh:'在定方案之前先验证有风险的那部分。'}},
+    {id:'inplace', t:{en:'A change made in place',zh:'在现有系统上改一处'},
+     d:{en:'No new system; modify what already exists.',zh:'不新起系统，改现有的。'}}
+  ],
+  horizons:[
+    {id:'single', t:{en:'One session',zh:'单次会话'},
+     d:{en:'Small enough to hold in one context window.',zh:'小到一个上下文窗口装得下。'}},
+    {id:'multi', t:{en:'Multiple sessions',zh:'多次会话'},
+     d:{en:'Needs a spec, then tracer-bullet tickets, then a build.',zh:'需要 spec、再拆 tracer-bullet ticket、然后建造。'}}
+  ],
+  budgets:[
+    {id:'halfday',t:{en:'Half a day',zh:'半天'}},
+    {id:'days',t:{en:'A few days',zh:'几天'}},
+    {id:'weeks',t:{en:'A few weeks',zh:'几周'}}
+  ],
+  rounds:[
+    {n:1, ids:['q1','q2','q3','q4']},
+    {n:2, ids:['q5','q6','q7','q8']}
+  ],
+  q:{
+    q1:{kind:'decision',
+      t:{en:'What are you detecting?',zh:'你要检测什么？'},
+      b:{en:'This drives the model and how much labelling you end up doing. Notice "notify me when something looks off" named no target at all.',
+         zh:'这决定用什么模型、以及你最后要标多少数据。注意「发现不对劲」根本没说要检测什么。'},
+      why:{en:'Nothing is settled yet, so this can be asked first.',zh:'目前什么都还没定，所以这个可以最先问。'},
+      unblocks:3,
+      opts:[
+        {t:{en:'People',zh:'人形'},rec:true,d:{en:'Best-supported, plenty of off-the-shelf models.',zh:'支持最好，现成模型最多。'}},
+        {t:{en:'Vehicles',zh:'车辆'}},
+        {t:{en:'A specific object (a parcel, a pet)',zh:'特定物体（包裹、宠物）'}},
+        {t:{en:'Behaviour (fighting, falling)',zh:'行为（打斗、摔倒）'},d:{en:'Much harder; needs temporal models and far more data.',zh:'难得多；需要时序模型和远更多的数据。'}}
+      ]},
+    q2:{kind:'decision',
+      t:{en:'Where does the video come from?',zh:'画面从哪来？'},
+      b:{en:'"My camera feed" is an assumption, not a fact. This decides the whole ingest path.',
+         zh:'「我的摄像头画面」是个假设，不是事实。这决定整条接入链路。'},
+      why:{en:'Independent of the detection target.',zh:'与检测目标无关，可并行问。'},
+      unblocks:2,
+      opts:[
+        {t:{en:'An existing IP camera over RTSP',zh:'已有的 IP 摄像头（RTSP）'},rec:true,d:{en:'Common, stable, nothing to build on the capture side.',zh:'最常见、最稳，采集端不用自己写。'}},
+        {t:{en:'My phone camera',zh:'手机摄像头'},d:{en:'Convenient, but the phone cannot stay on forever.',zh:'方便，但手机不可能一直开着。'}},
+        {t:{en:'Files I upload',zh:'我上传的视频文件'},d:{en:'Simplest to build, but loses "live".',zh:'最容易做，但失去「实时」。'}}
+      ]},
+    q3:{kind:'decision',
+      t:{en:'How should it reach you?',zh:'它怎么找到你？'},
+      b:{en:'"Pings me" could be anything. The channel decides how much latency and delivery work you are signing up for.',
+         zh:'「通知我」可以是任何形式。渠道决定你要承担多少延迟和投递方面的活。'},
+      why:{en:'Independent.',zh:'独立，可并行问。'},
+      unblocks:1,
+      opts:[
+        {t:{en:'Desktop notification',zh:'桌面系统通知'},rec:true,d:{en:'No credentials, no third party, works today.',zh:'不用凭据、不接三方、今天就能用。'}},
+        {t:{en:'Email',zh:'邮件'}},
+        {t:{en:'A chat app (WeCom, Slack)',zh:'IM（企业微信、Slack）'}},
+        {t:{en:'Don\u2019t notify \u2014 just keep the record',zh:'不通知 —— 只留记录'}}
+      ]},
+    q4:{kind:'decision',
+      t:{en:'Where does it run?',zh:'跑在哪？'},
+      b:{en:'This is the prerequisite for the analysis-placement question, so it has to be settled before that one can even be asked.',
+         zh:'这是「分析放哪」那一问的前提，所以必须先定它，那一问才问得出来。'},
+      why:{en:'Independent, but it gates a question in the next round.',zh:'本身独立，但它卡着下一轮的一个问题。'},
+      unblocks:1,
+      opts:[
+        {t:{en:'This machine',zh:'这台机器'},rec:true,d:{en:'Lowest friction; revisit if load grows.',zh:'阻力最小；负载涨了再说。'}},
+        {t:{en:'A small always-on box at home',zh:'家里常开的小主机'}},
+        {t:{en:'Cloud',zh:'云'}},
+        {t:{en:'Split: capture at the edge, analysis in the cloud',zh:'拆开：边缘采集，云端分析'}}
+      ]},
+    q5:{kind:'decision',needsProto:{kind:'logic',
+      reason:{en:'Throughput and backpressure are the kind of answer you can only get by running it. Pick a design now, then let a prototype settle whether it holds.',
+              zh:'吞吐和背压只能靠跑才知道。先选个方案，然后让原型验证它成不成立。'}},
+      t:{en:'Analysis on the capture host, or one hop away?',zh:'分析放在采集端，还是隔一跳？'},
+      b:{en:'Now askable, because "where it runs" is settled. If the camera host is weak, doing inference there caps how many frames you can process.',
+         zh:'现在能问了，因为「跑在哪」已定。如果摄像头那头算力弱，把推理放上去就限死了每秒能处理多少帧。'},
+      why:{en:'Settled by Round 1 · Q4.',zh:'由第 1 轮 Q4 解锁。'},
+      unblocks:2,
+      opts:[
+        {t:{en:'On the capture host, alongside the camera',zh:'在采集端，跟摄像头一起'}},
+        {t:{en:'One hop away, on the same LAN',zh:'隔一跳，同一个局域网内'},rec:true,d:{en:'Keeps the camera host light and leaves room to scale the analysis side.',zh:'让摄像头那头保持轻量，分析端还留了扩展余地。'}},
+        {t:{en:'Decide by measurement, not now',zh:'不现在定，靠测量决定'},d:{en:'Produces a prototype instead of a decision.',zh:'产出一个原型，而不是一个决策。'}}
+      ]},
+    q6:{kind:'decision',
+      t:{en:'How fresh does an alert need to be?',zh:'告警要多新？'},
+      b:{en:'Latency sets the whole processing shape: streaming, micro-batching, or batch.',
+         zh:'延迟决定整套处理的形状：流式、微批、还是批处理。'},
+      why:{en:'Follows from the placement question.',zh:'接在「放哪」之后。'},
+      unblocks:1,
+      opts:[
+        {t:{en:'Seconds',zh:'秒级'}},
+        {t:{en:'Around ten seconds',zh:'十秒左右'},rec:true,d:{en:'Lets you batch a few frames, which is far cheaper than per-frame inference.',zh:'允许攒几帧再处理，比逐帧推理便宜得多。'}},
+        {t:{en:'Minutes \u2014 batch is fine',zh:'分钟级 —— 批处理就行'}}
+      ]},
+    q7:{kind:'decision',
+      t:{en:'Keep history for replay?',zh:'要留历史回放吗？'},
+      b:{en:'"Only notify me" silently implies no storage, but nobody said so out loud. Retention is the thing that turns a memory leak into a policy.',
+         zh:'「只通知我」默默暗示了不存东西，但没有人明说。保留策略就是把内存泄漏变成一条策略的那个东西。'},
+      why:{en:'Independent of latency.',zh:'与延迟无关。'},
+      unblocks:1,
+      opts:[
+        {t:{en:'No \u2014 live only',zh:'不留 —— 只看实时'}},
+        {t:{en:'Yes, about a week',zh:'留，大约一周'},rec:true,d:{en:'Enough to check an alert after the fact without owning a growing archive.',zh:'足够事后回看一次告警，又不会攒出一个不断变大的归档。'}},
+        {t:{en:'Yes, long term',zh:'留，长期'},d:{en:'Pulls in the cold-storage question immediately.',zh:'立刻把冷存储的问题拉进来。'}}
+      ]},
+    q8:{kind:'decision',
+      t:{en:'When it cries wolf, what then?',zh:'误报的时候怎么办？'},
+      b:{en:'Every detector misfires. Deciding the response now is what stops this becoming an argument with yourself later.',
+         zh:'任何检测器都会误报。现在定下应对方式，才不会变成以后自己跟自己吵。'},
+      why:{en:'Independent.',zh:'独立。'},
+      unblocks:0,
+      opts:[
+        {t:{en:'Raise the threshold \u2014 miss some, never nag',zh:'提高阈值 —— 宁可漏，不要烦'}},
+        {t:{en:'Lower it \u2014 catch everything, sort it out later',zh:'降低阈值 —— 先全抓，之后再说'}},
+        {t:{en:'Let me mark alerts, and watch before tuning',zh:'让我标记告警，先观察再调'},rec:true,d:{en:'Buys you data before you tune anything, at the cost of one small feedback control.',zh:'先换来数据再调参，代价是一个小小的反馈控件。'}}
+      ]}
+  },
+  /* Uncertainty: the questions that cannot be settled by talking. */
+  protos:[
+    {id:'p1',kind:'logic',from:'q5',
+     t:{en:'Batch queue: throughput and backpressure',zh:'批处理队列：吞吐与背压'},
+     why:{en:'"Is ten seconds achievable on this box" is not a sentence anyone can settle. It is a measurement. The prototype pushes the queue through the cases that are hard to reason about on paper: a burst arriving, the analyser falling behind, the queue filling, frames arriving while the queue is full.',
+          zh:'「这台机器上十秒够不够」不是能聊出来的句子，是个测量。原型会把队列推过那些纸上想不清的情形：突发流量到达、分析器跟不上、队列塞满、队列满时新帧还在来。'},
+     shape:{en:'free-play buttons plus tabbed guided walkthroughs in one shareable HTML file',zh:'一个可分享的 HTML 文件：自由操作按钮 + 分页引导用例'}},
+    {id:'p2',kind:'ui',from:null,
+     t:{en:'What the live view and alert list look like',zh:'实时视图与告警列表长什么样'},
+     why:{en:'Four different layouts will each feel plausible until you actually see them. Describing a UI in prose produces agreement, not a decision.',
+          zh:'四种布局在真看到之前每一个都听着有道理。用文字描述界面得到的是「同意」，不是「决定」。'},
+     shape:{en:'several radically different variations on one route, switchable from a floating bar',zh:'同一路由上的几个差异极大的方案，底部浮动条切换'}}
+  ],
+  prd:{
+    problem:{
+      en:'A camera feed already exists, but nothing watches it. Anything worth noticing is noticed late, by a person who happened to look. The cost of a missed event is only discovered after the fact.',
+      zh:'摄像头画面已经有了，但没有人盯着它。值得注意的事都是事后才被某个恰好看到的人发现的。漏掉一件事的代价，只有事后才知道。'},
+    solution:{
+      en:'A single-host service that takes one RTSP stream, detects people roughly ten seconds behind live, raises a desktop notification, and keeps about a week of history so an alert can be checked afterwards. No accounts, no cloud, no multi-tenant model.',
+      zh:'一个单机服务：接一路 RTSP 流、在人形出现的十秒左右给出提示、发桌面通知，并保留大约一周的历史，方便事后回看告警。没有账号、不上云、不做多租户。'},
+    stories:[
+      {en:'As the only user, I want an alert within ten seconds of a person appearing, so that I can react while it still matters.',zh:'作为唯一使用者，我希望有人出现后十秒内收到提示，这样还来得及反应。'},
+      {en:'As the only user, I want to tune the sensitivity for one camera, so that a fixed threshold does not have to fit every condition.',zh:'作为唯一使用者，我希望针对这一路摄像头调灵敏度，这样不必用一个固定阈值去适配所有情况。'},
+      {en:'As the only user, I want to look back about a week, so that I can check an alert I saw earlier.',zh:'作为唯一使用者，我希望回看大约一周，这样能查之前看到的告警。'},
+      {en:'As the only user, I want to mark an alert as wrong, so that I accumulate evidence before tuning anything.',zh:'作为唯一使用者，我希望把一条告警标记为误报，这样在调参之前先攒下证据。'},
+      {en:'As the only user, I want the service to survive the camera dropping offline, so that a reboot does not silently stop detection.',zh:'作为唯一使用者，我希望摄像头掉线后服务能撑住，这样一次重启不会悄悄停掉检测。'},
+      {en:'As the only user, I want old history to expire on its own, so that nothing needs manual housekeeping.',zh:'作为唯一使用者，我希望旧历史自动过期，这样不需要手工清理。'},
+      {en:'As the only user, I want to know whether the analyser is keeping up, so that "no alerts" can be trusted.',zh:'作为唯一使用者，我希望知道分析器是否跟得上，这样「没有告警」才可信。'},
+      {en:'As the only user, I want to start it from one command, so that restarting it is not a procedure.',zh:'作为唯一使用者，我希望一条命令就能启动它，这样重启它不需要一套流程。'}
+    ],
+    decisions:[
+      {en:'Detection target: people.',zh:'检测目标：人形。'},
+      {en:'Ingest: one RTSP stream, no capture-side code.',zh:'接入：一路 RTSP，采集端不自研。'},
+      {en:'Placement: analysis one hop away on the same LAN, keeping the camera host light.',zh:'位置：分析隔一跳放在同一局域网内，摄像头那头保持轻量。'},
+      {en:'Latency: roughly ten seconds, so frames may be micro-batched rather than inferred one by one.',zh:'延迟：十秒左右，因此可以微批处理帧，而非逐帧推理。'},
+      {en:'Notification: desktop, fire-and-forget.',zh:'通知：桌面通知，发出去就不管。'},
+      {en:'Retention: about a week, expiring automatically.',zh:'保留：大约一周，自动过期。'},
+      {en:'False positives: the user marks them, and tuning follows the data.',zh:'误报：由用户标记，调参跟着数据走。'}
+    ],
+    testing:[
+      {en:'Test external behaviour only: given a stream and a queue, the outcome is an alert or not. Never assert on which internal stage ran.',
+         zh:'只测外部行为：给定一条流和一个队列，结果是告警或不告警。绝不断言内部哪个阶段跑了。'},
+      {en:'The queue is the interesting part and gets the real tests; the detector is a boundary and gets a stub.',
+         zh:'队列是有意思的部分，真测它；检测器是边界，用桩替代。'},
+      {en:'Prior art: none. This repo has no tests yet, so the seam below is also the first test.',
+         zh:'先例：无。这个仓库还没有测试，所以下面那条缝同时也是第一个测试。'}
+    ],
+    seam:{en:'One seam, at the ingest boundary: everything above it is testable with no camera present.',
+          zh:'只有一条缝，在接入边界：缝以上的部分无需真实摄像头即可测试。'},
+    out:[
+      {en:'Multi-camera or multi-user operation.',zh:'多摄像头、多用户运行。'},
+      {en:'Cloud deployment and remote access.',zh:'云部署与远程访问。'},
+      {en:'Identifying who a detected person is.',zh:'识别检测到的人是谁。'},
+      {en:'Any integration with an existing recorder.',zh:'与现有录像系统的任何集成。'}
+    ]
+  },
+  glossary:[
+    {at:'frame',w:'frame',d:{en:'one decoded still from the stream',zh:'流中解码出的一帧静止画面'}},
+    {at:'frame',w:'alert',d:{en:'one notification the user receives',zh:'用户收到的一次通知'}},
+    {at:'rounds1',w:'lane',d:{en:'one camera\u2019s pipeline',zh:'一路摄像头的处理管线'}},
+    {at:'rounds1',w:'queue depth',d:{en:'frames waiting while the analyser is busy',zh:'分析器忙时排队等待的帧数'}},
+    {at:'rounds2',w:'drop vs stall',d:{en:'discard a frame, or hold the stream back',zh:'丢弃一帧，还是把流拖住'}},
+    {at:'rounds2',w:'return window',d:{en:'how long history stays replayable',zh:'历史可以被回看多久'}},
+    {at:'rounds2',w:'retention',d:{en:'the rule that expires history',zh:'让历史过期的规则'}},
+    {at:'prd',w:'seam',d:{en:'the boundary tests are written against',zh:'测试所针对的那条边界'}}
+  ],
+  adrs:[
+    {id:'0001',t:{en:'Analysis sits one hop from the camera, not on the camera host',zh:'分析隔一跳放置，不放在摄像头那头'},
+     why:{en:'Keeps the capture side replaceable and leaves headroom for a second lane.',zh:'让采集端可替换，并为第二路留出余量。'}},
+    {id:'0002',t:{en:'Micro-batching over per-frame inference',zh:'采用微批处理而非逐帧推理'},
+     why:{en:'A ten-second latency budget makes per-frame inference a cost with no benefit.',zh:'十秒的延迟预算下，逐帧推理是只增成本不增好处。'}},
+    {id:'0003',t:{en:'History expires automatically',zh:'历史自动过期'},
+     why:{en:'Retention is a policy from day one, not housekeeping deferred.',zh:'保留策略从第一天就是策略，不是拖到以后的杂活。'}}
+  ],
+  tasks:[
+    {t:{en:'Reading the RTSP camera\u2019s reported capabilities',zh:'读取 RTSP 摄像头上报的能力'}},
+    {t:{en:'Checking which detection models run acceptably on this machine',zh:'确认哪些检测模型在这台机器上跑得动'}},
+    {t:{en:'Looking up the desktop notification API for this OS',zh:'查这个操作系统的桌面通知 API'}}
+  ]
+};
+
+const WZSTATE={open:false,step:0,seed:'',seedTouched:false,frame:null,otherFrame:'',
+  kind:'spec',horizon:'multi',budget:'days',answers:{},submitted:{},round:0,accepted:false,
+  projName:'camera-watch'};
+
+/* Traceability: which PRD decision each settled question lands in. Two questions
+ * may fold into one decision — placement is settled by Q4 and Q5 together — so
+ * the counts legitimately differ. This map is the source of truth, not the count. */
+WIZ.covers={q1:0,q2:1,q3:4,q4:2,q5:2,q6:3,q7:5,q8:6};
+
+function wzSeedDefault(){return '做个能盯着我摄像头画面、发现不对劲就通知我的东西';}
+function wzSeed(){return WZSTATE.seedTouched?WZSTATE.seed:wzSeedDefault();}
+function wzQ(id){return WIZ.q[id];}
+function wzAnswered(id){return WZSTATE.answers[id]!==undefined&&WZSTATE.answers[id]!==null;}
+function wzRoundAnswered(ri){return WIZ.rounds[ri].ids.every(wzAnswered);}
+function wzSettledCount(){return Object.keys(WIZ.q).filter(wzAnswered).length;}
+function wzOpenCount(){return Object.keys(WIZ.q).length-wzSettledCount();}
+function wzProtos(){return WIZ.protos;}
+function wzGlossaryAt(){
+  /* Terms accumulate as the rounds settle, so the panel shows the glossary
+   * growing rather than appearing whole. */
+  const stage={frame:1,rounds1:2,rounds2:3,prd:4};
+  const ceiling=WZSTATE.step>=5?4:WZSTATE.step;
+  return WIZ.glossary.filter(g=>stage[g.at]<=ceiling);
+}
+function wzCanAdvance(){
+  switch(WIZ_STEPS[WZSTATE.step]){
+    case 'seed':return wzSeed().trim().length>=8;
+    /* frame is an index, and the recommended reading is index 0 — so this must
+     * test for "chosen", not truthiness. -1 means "none of these". */
+    case 'frame':return WZSTATE.frame!==null&&WZSTATE.frame!==undefined;
+    case 'rounds':return WZSTATE.round>=WIZ.rounds.length-1&&wzRoundAnswered(WIZ.rounds.length-1);
+    default:return true;
+  }
+}
+
+function openWizard(){WZSTATE.open=true;document.getElementById('wizard').classList.add('on');renderWizard();}
+function closeWizard(){
+  WZSTATE.open=false;document.getElementById('wizard').classList.remove('on');
+  document.getElementById('wizard').scrollTop=0;renderAll();
+}
+function wzGo(i){
+  WZSTATE.step=Math.max(0,Math.min(WIZ_STEPS.length-1,i));
+  renderWizard();
+  const sc=document.querySelector('.wz-scroll');if(sc)sc.scrollTop=0;
+}
+function wzAcceptAll(){
+  const r=WIZ.rounds[WZSTATE.round];
+  r.ids.forEach(id=>{
+    const q=wzQ(id);if(wzAnswered(id))return;
+    const idx=q.opts.findIndex(o=>o.rec);
+    WZSTATE.answers[id]=idx>=0?idx:0;
+  });
+  renderWizard();
+  toast(t('toast.wizAcceptAll'));
+}
+function wzSubmitRound(){
+  if(!wzRoundAnswered(WZSTATE.round))return;
+  if(WZSTATE.round<WIZ.rounds.length-1){
+    WZSTATE.round++;
+    renderWizard();
+    toast(t('toast.wizRound',{n:WIZ.rounds[WZSTATE.round].ids.length}));
+  }else{
+    renderWizard();
+    toast(t('toast.wizFrontierEmpty'));
+  }
+}
+function wzCreate(){
+  const name=WZSTATE.projName.trim()||'camera-watch';
+  const key=wzSlug(name);
+  if(!PROJECTS[key]){
+    PROJECTS[key]={name:name,
+      mode:{en:'Local workspace',zh:'本地工作区'},
+      branch:'integration/'+key,
+      dot:'run',blk:0,running:1,
+      updated:'just now',
+      note:{en:'Created by the concept-init wizard; PRD approved at the Stage 4 boundary',
+            zh:'由概念初始化向导创建；PRD 已在阶段 4 边界通过'},
+      commits:0,
+      pipeline:[
+        {n:'s1',s:'done',sk:{en:'concept init',zh:'概念初始化'}},
+        {n:'s2',s:'done',sk:'/grill-with-docs',g:true},
+        {n:'s3',s:'done',sk:'/prototype + /handoff',g:true},
+        {n:'s4',s:'active',sk:'/to-spec'},
+        {n:'s5',s:'pending',sk:'/to-tickets'},
+        {n:'s6',s:'pending',sk:'/implement-spec + /tdd'},
+        {n:'s7',s:'pending',sk:'/code-review'},
+        {n:'s8',s:'pending',sk:'CI / CD'},
+        {n:'s9',s:'pending',sk:'/retro'}
+      ],
+      records:{},tickets:[],
+      gates:[],ci:{pipe:[],servers:[],releases:[],log:[]}};
+  }
+  closeWizard();
+  STATE.scope='project';STATE.project=key;STATE.view='pipeline';STATE.stage=2;
+  renderAll();
+  toast(t('toast.wizCreated',{name:name,n:4}));
+}
+
+function wzTop(){
+  document.getElementById('wzEyebrow').textContent=t('wiz.eyebrow');
+  document.getElementById('wzStages').textContent=t('wiz.runsStages');
+  const done=WZSTATE.step;
+  const pct=Math.round((done/(WIZ_STEPS.length-1))*100);
+  document.getElementById('wzStepN').textContent=t('wiz.stepN',{n:WZSTATE.step+1,total:WIZ_STEPS.length});
+  document.getElementById('wzPct').textContent=pct+'%';
+  document.getElementById('wzBar').style.width=pct+'%';
+  const ex=document.getElementById('wzExit');
+  ex.textContent=t('wiz.exit');
+}
+
+function wzRail(){
+  document.getElementById('wzRail').innerHTML=
+    '<div class="sec" style="padding-top:2px">'+t('wiz.steps')+'</div>'+
+    WIZ_STEPS.map((s,i)=>{
+      const cls=i<WZSTATE.step?'done':i===WZSTATE.step?'on':'todo';
+      return '<div class="wz-step '+cls+'" data-i="'+i+'">'+
+        '<span class="wz-n">'+(i<WZSTATE.step?'✓':i+1)+'</span>'+
+        '<div style="min-width:0"><div class="wz-t">'+t('wiz.step.'+s)+'</div>'+
+        '<div class="wz-s">'+t('wiz.step.'+s+'.s')+'</div></div></div>';
+    }).join('');
+  document.querySelectorAll('#wzRail .wz-step').forEach(e=>
+    e.onclick=()=>wzGo(+e.dataset.i));
+}
+
+function wzCtx(){
+  const terms=wzGlossaryAt();
+  const open=wzOpenCount();
+  let h='';
+  h+='<div class="wz-ctxcard"><h4>'+t('wiz.ctx.glossary')+
+     '<span>'+(terms.length?t('wiz.ctx.terms',{n:terms.length}):t('wiz.ctx.none'))+'</span></h4>';
+  h+=terms.length?terms.map(g=>'<div class="term"><b>'+g.w+'</b><span>'+L(g.d)+'</span></div>').join('')
+    :'<div class="task">'+t('wiz.ctx.noTasks')+'</div>';
+  h+='</div>';
+
+  h+='<div class="wz-ctxcard"><h4>'+t('wiz.ctx.openDecisions')+
+     '<span>'+t('wiz.ctx.open',{n:open})+'</span></h4>';
+  h+=Object.keys(WIZ.q).slice(0,4).map(id=>{
+    const q=wzQ(id),ok=wzAnswered(id);
+    const k=ok?'k-settled':(q.needsProto?'k-proto':'k-decision');
+    const label=ok?t('wiz.kind.settled'):(q.needsProto?t('wiz.kind.prototype'):t('wiz.kind.decision'));
+    return '<div class="term"><b style="font-size:11.5px;color:var(--label-2)">'+id.toUpperCase()+'</b>'+
+      '<span><span class="kind '+k+'">'+label+'</span></span></div>';
+  }).join('');
+  h+='</div>';
+
+  if(WZSTATE.step>=2&&WZSTATE.step<=4){
+    h+='<div class="wz-ctxcard"><h4>'+t('wiz.ctx.factTasks')+
+       '<span>'+t('wiz.ctx.running',{n:WIZ.tasks.length})+'</span></h4>';
+    h+=WIZ.tasks.map((tk,i)=>'<div class="task"><span class="spinner"></span><span>'+L(tk.t)+'</span></div>').join('');
+    h+='<div style="font-size:11px;color:var(--label-3);margin-top:9px;line-height:1.55">'+
+       t('wiz.rounds.factNote')+'</div></div>';
+  }
+
+  if(WZSTATE.step>=5){
+    h+='<div class="wz-ctxcard"><h4>'+t('wiz.ctx.adr')+'<span>'+WIZ.adrs.length+'</span></h4>';
+    h+=WIZ.adrs.map(a=>'<div class="term"><b style="font-family:var(--mono);font-size:11px">ADR-'+a.id+
+      '</b><span>'+L(a.t)+'<br><span style="color:var(--label-4)">'+L(a.why)+'</span></span></div>').join('');
+    h+='</div>';
+  }
+  document.getElementById('wzCtx').innerHTML=h;
+}
+
+function wzFoot(primary,second){
+  let h='';
+  if(WZSTATE.step>0)h+='<button class="btn" id="wzBackBtn">'+t('wiz.back')+'</button>';
+  h+='<span class="sp"></span>';
+  if(second)h+=second;
+  if(primary)h+=primary;
+  document.getElementById('wzFoot').innerHTML=h;
+  const b=document.getElementById('wzBackBtn');
+  if(b)b.onclick=()=>wzGo(WZSTATE.step-1);
+}
+
+function renderWizard(){
+  if(!WZSTATE.open)return;
+  wzTop();wzRail();wzCtx();
+  const step=WIZ_STEPS[WZSTATE.step];
+  const m=document.getElementById('wzMain');
+  if(step==='seed')m.innerHTML=wzSeedView();
+  else if(step==='frame')m.innerHTML=wzFrameView();
+  else if(step==='destination')m.innerHTML=wzDestView();
+  else if(step==='rounds')m.innerHTML=wzRoundsView();
+  else if(step==='uncertainty')m.innerHTML=wzUncertaintyView();
+  else m.innerHTML=wzPrdView();
+  wzBind(step);
+  wzFoot(wzPrimary());
+  wzWireFoot();
+}
+
+function wzWarn(msg){
+  return '<div class="wz-warn">'+svg(ICON.bolt)+'<span>'+msg+'</span></div>';
+}
+
+function wzSeedView(){
+  const ex=['做个能盯着我摄像头画面、发现不对劲就通知我的东西',
+            '把我们的周报流程自动化，别再手工拼了',
+            '给客服做个能自己回答常见问题的机器人'];
+  return '<h1 class="wz-h1">'+t('wiz.seed.title')+'</h1>'+
+    '<p class="wz-lede">'+t('wiz.seed.lede')+'</p>'+
+    '<div class="field"><label>'+t('wiz.seed.label')+'</label>'+
+    '<textarea class="wz-seed" id="wzSeedInput" placeholder="'+t('wiz.seed.ph')+'">'+wzSeed()+'</textarea>'+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:600;color:var(--label-3);margin:14px 0 0">'+t('wiz.seed.examples')+'</div>'+
+    '<div class="chips">'+ex.map(e=>'<button class="chip-e" data-ex="'+e+'">'+e+'</button>').join('')+'</div>'+
+    '<div style="font-size:11px;font-weight:600;color:var(--label-3);margin:18px 0 6px">'+t('wiz.seed.repo')+'</div>'+
+    '<div class="field"><input type="text" placeholder="'+t('wiz.seed.repoPh')+'"></div>'+
+    '<div class="wz-warn" style="background:var(--blue-t);color:var(--blue-d)">'+svg(ICON.input)+
+      '<span>'+t('wiz.seed.note')+'</span></div>';
+}
+
+function wzFrameView(){
+  if(!wzSeed().trim())return wzEmpty(t('wiz.empty.seed'));
+  return '<h1 class="wz-h1">'+t('wiz.frame.title')+'</h1>'+
+    '<p class="wz-lede">'+t('wiz.frame.lede')+'</p>'+
+    '<div class="wz-warn" style="background:var(--fill);color:var(--label-2)">'+svg(ICON.action)+
+      '<span style="font-style:italic">“'+wzSeed()+'”</span></div>'+
+    '<div style="font-size:11px;font-weight:600;color:var(--label-3);margin-bottom:9px">'+
+      t('wiz.frame.pick')+'</div>'+
+    WIZ.frames.map((f,i)=>{
+      const on=WZSTATE.frame===i;
+      return '<div class="opt'+(on?' on':'')+'" data-f="'+i+'">'+
+        '<span class="rad"></span><div class="ob">'+
+        '<div class="ot">'+L(f.t)+(i===0?'<span class="rec">'+t('wiz.frame.recommended')+'</span>':'')+'</div>'+
+        '<div class="od">'+L(f.d)+'</div>'+
+        '<div class="oshape"><b>'+t('wiz.frame.shape')+':</b> '+L(f.shape)+'</div>'+
+      '</div></div>';
+    }).join('')+
+    '<div class="opt other'+(WZSTATE.frame===-1?' on':'')+'" data-f="-1">'+
+      '<span class="rad"></span><div class="ob"><div class="ot">'+t('wiz.frame.other')+'</div>'+
+      '<div class="od" style="margin-bottom:8px">'+t('wiz.frame.lede').split('—')[0]+'</div>'+
+      '<input type="text" id="wzOtherFrame" placeholder="'+t('wiz.frame.otherPh')+'" value="'+WZSTATE.otherFrame+'">'+
+    '</div></div>';
+}
+
+function wzDestView(){
+  const group=(label,items,cur,key)=>'<div style="font-size:11px;font-weight:600;color:var(--label-3);margin:0 0 9px">'+label+'</div>'+
+    items.map(it=>{
+      const on=WZSTATE[key]===it.id;
+      return '<div class="opt'+(on?' on':'')+'" data-k="'+key+'" data-v="'+it.id+'">'+
+        '<span class="rad"></span><div class="ob"><div class="ot">'+L(it.t)+'</div>'+
+        (it.d?'<div class="od">'+L(it.d)+'</div>':'')+'</div></div>';
+    }).join('');
+  return '<h1 class="wz-h1">'+t('wiz.dest.title')+'</h1>'+
+    '<p class="wz-lede">'+t('wiz.dest.lede')+'</p>'+
+    group(t('wiz.dest.kind'),WIZ.destKinds,WZSTATE.kind,'kind')+
+    '<div style="height:12px"></div>'+
+    group(t('wiz.dest.horizon'),WIZ.horizons,WZSTATE.horizon,'horizon')+
+    '<div style="height:12px"></div>'+
+    group(t('wiz.dest.budget'),WIZ.budgets,WZSTATE.budget,'budget')+
+    '<div class="wz-warn">'+svg(ICON.gate)+'<span>'+t('wiz.dest.hint')+'</span></div>';
+}
+
+function wzRoundsView(){
+  if(WZSTATE.frame===null)return wzEmpty(t('wiz.empty.frame'));
+  const ri=WZSTATE.round,r=WIZ.rounds[ri];
+  const settled=wzSettledCount();
+  let h='<h1 class="wz-h1">'+t('wiz.rounds.title')+'</h1>'+
+    '<p class="wz-lede">'+t('wiz.rounds.lede')+'</p>'+
+    '<div style="display:flex;align-items:center;gap:9px;margin-bottom:16px">'+
+      '<span class="pill p-blue">'+t('wiz.rounds.roundN',{n:ri+1})+'</span>'+
+      '<span class="pill p-gray">'+t('wiz.rounds.frontier',{n:r.ids.length})+'</span>'+
+      (settled?'<span class="pill p-green">'+t('wiz.rounds.answeredN',{n:settled})+'</span>':'')+
+    '</div>';
+  h+=r.ids.map((id,n)=>{
+    const q=wzQ(id);
+    const kindCls=q.needsProto?'k-proto':(q.kind==='fact'?'k-fact':'k-decision');
+    const kindLbl=q.needsProto?t('wiz.kind.prototype'):(q.kind==='fact'?t('wiz.kind.fact'):t('wiz.kind.decision'));
+    return '<div class="qc" data-q="'+id+'">'+
+      '<div class="qc-h"><span class="qnum">Q'+(n+1)+'</span><div class="qc-q">'+
+        '<div class="qc-t">'+L(q.t)+'</div>'+
+        '<div class="qc-b">'+L(q.b)+'</div>'+
+        '<div class="qc-why">'+svg(ICON.clock)+'<span><b>'+t('wiz.rounds.why')+':</b> '+L(q.why)+
+          (q.unblocks?' · '+t('wiz.rounds.unblocks',{n:q.unblocks}):'')+'</span></div>'+
+      '</div><span class="kind '+kindCls+'">'+kindLbl+'</span></div>'+
+      '<div class="qc-opts">'+q.opts.map((o,i)=>{
+        const on=WZSTATE.answers[id]===i;
+        return '<div class="qo'+(on?' on':'')+'" data-q="'+id+'" data-o="'+i+'">'+
+          '<span class="rd"></span><span class="qt">'+L(o.t)+
+          (o.rec?'<span class="rec">'+t('wiz.rounds.recommended')+'</span>':'')+
+          (o.d?'<div style="color:var(--label-2);font-size:11.5px;margin-top:4px;line-height:1.5">'+L(o.d)+'</div>':'')+
+        '</span></div>';
+      }).join('')+'</div>'+
+      '<div class="qc-other"><input type="text" data-other="'+id+'" placeholder="'+t('wiz.rounds.otherPh')+'"></div>'+
+      '<div class="qc-foot">'+svg(ICON.action)+'<span>'+t('wiz.rounds.other')+'</span>'+
+        (q.needsProto?'<span class="kind k-proto" style="margin-left:auto">'+t('wiz.uncertainty.needs')+'</span>':'')+
+      '</div></div>';
+  }).join('');
+  if(wzRoundAnswered(ri))h+='<div class="wz-warn" style="background:var(--green-t);color:var(--green-d)">'+
+    svg(ICON.check)+'<span>'+t('wiz.rounds.done')+'</span></div>';
+  return h;
+}
+
+function wzUncertaintyView(){
+  const needs=WIZ.protos;
+  const settled=Object.keys(WIZ.q).filter(wzAnswered);
+  let h='<h1 class="wz-h1">'+t('wiz.uncertainty.title')+'</h1>'+
+    '<p class="wz-lede">'+t('wiz.uncertainty.lede')+'</p>';
+  if(!needs.length)h+=wzEmpty(t('wiz.uncertainty.none'));
+  needs.forEach(p=>{
+    h+='<div class="card"><h3><span class="kind '+(p.kind==='logic'?'k-proto':'k-proto')+'">'+
+      (p.kind==='logic'?t('wiz.uncertainty.logic'):t('wiz.uncertainty.ui'))+'</span>'+
+      L(p.t)+'</h3><div class="bd">'+
+      '<div style="font-size:12.5px;color:var(--label-2);line-height:1.68;margin-bottom:11px">'+L(p.why)+'</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+        '<span class="pill p-gray">'+t('wiz.uncertainty.ticket')+'</span>'+
+        '<span class="pill p-teal">prototype/'+(p.kind==='logic'?'batch-queue':'live-view')+'</span>'+
+        (p.from?'<span class="pill p-purple">'+p.from.toUpperCase()+'</span>':'')+
+      '</div>'+
+      '<div style="font-size:11.5px;color:var(--label-3);margin-top:10px;line-height:1.55">'+
+        '<b>'+t('wiz.uncertainty.branch')+'</b></div>'+
+      '<div style="font-size:11.5px;color:var(--label-3);margin-top:6px;line-height:1.55">'+
+        L(p.shape)+'</div>'+
+    '</div></div>';
+  });
+  h+='<div class="card"><h3>'+t('wiz.uncertainty.decided')+
+    '<span class="pill p-green" style="margin-left:9px">'+settled.length+'</span></h3><div class="bd">';
+  h+=settled.map(id=>{
+    const q=wzQ(id),a=q.opts[WZSTATE.answers[id]];
+    return '<div class="term"><b style="color:var(--label-4);font-family:var(--mono);font-size:11px">'+
+      id.toUpperCase()+'</b><span style="color:var(--label)">'+L(q.t)+' → <b>'+L(a.t)+'</b></span></div>';
+  }).join('');
+  h+='</div></div>';
+  return h;
+}
+
+function wzPrdView(){
+  const P_=WIZ.prd;
+  const sec=(title,body,extra)=>'<div class="prd"><h4>'+title+(extra||'')+'</h4>'+
+    '<div class="pb">'+body+'</div></div>';
+  let h='<h1 class="wz-h1">'+t('wiz.prd.title')+'</h1>'+
+    '<p class="wz-lede">'+t('wiz.prd.lede')+'</p>';
+  const slug=wzSlug(WZSTATE.projName);
+  h+='<div class="field"><label>'+t('wiz.prd.project')+'</label>'+
+    '<input type="text" id="wzProjName" value="'+WZSTATE.projName+'">'+
+    '<div class="hint">'+t('wiz.prd.projectHint',{slug:slug})+'</div></div>';
+  h+=sec(t('wiz.prd.problem'),L(P_.problem));
+  h+=sec(t('wiz.prd.solution'),L(P_.solution));
+  h+=sec(t('wiz.prd.stories'),
+    '<ol>'+P_.stories.map(s=>'<li>'+L(s)+'</li>').join('')+'</ol>',
+    '<span>'+t('wiz.prd.storiesN',{n:P_.stories.length})+'</span>');
+  h+=sec(t('wiz.prd.decisions'),
+    '<ul>'+P_.decisions.map(s=>'<li>'+L(s)+'</li>').join('')+'</ul>');
+  h+=sec(t('wiz.prd.testing'),
+    '<ul>'+P_.testing.map(s=>'<li>'+L(s)+'</li>').join('')+'</ul>'+
+    '<div class="seam"><b>'+t('wiz.prd.seams')+':</b> '+L(P_.seam)+
+    '<div style="margin-top:6px;font-size:11.5px;opacity:.85">'+t('wiz.prd.seamNote')+'</div></div>');
+  h+=sec(t('wiz.prd.out'),
+    '<ul>'+P_.out.map(s=>'<li>'+L(s)+'</li>').join('')+'</ul>');
+  h+=sec(t('wiz.prd.glossary'),
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">'+
+    WIZ.glossary.map(g=>'<span class="pill p-gray">'+g.w+'</span>').join('')+'</div>');
+  h+=sec(t('wiz.prd.adr'),
+    WIZ.adrs.map(a=>'<div style="display:flex;gap:9px;margin-bottom:7px">'+
+      '<b style="font-family:var(--mono);font-size:11px;color:var(--label-3);flex:0 0 auto">ADR-'+a.id+'</b>'+
+      '<span>'+L(a.t)+'<div style="font-size:11.5px;color:var(--label-3);margin-top:2px">'+L(a.why)+'</div></span>'+
+    '</div>').join(''));
+  return h;
+}
+
+function wzEmpty(msg){return '<div class="empty">'+msg+'</div>';}
+
+function wzSlug(s){
+  return String(s).toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'new-project';
+}
+
+function wzBind(step){
+  const m=document.getElementById('wzMain');
+  if(step==='seed'){
+    const ta=document.getElementById('wzSeedInput');
+    if(ta){
+      ta.oninput=()=>{WZSTATE.seed=ta.value;WZSTATE.seedTouched=true;
+        const btn=document.getElementById('wzNextBtn');if(btn)btn.disabled=!wzCanAdvance();};
+    }
+    m.querySelectorAll('.chip-e').forEach(b=>b.onclick=()=>{
+      WZSTATE.seed=b.dataset.ex;WZSTATE.seedTouched=true;renderWizard();});
+  }
+  if(step==='frame'){
+    m.querySelectorAll('.opt[data-f]').forEach(o=>o.onclick=e=>{
+      if(e.target.id==='wzOtherFrame')return;
+      WZSTATE.frame=+o.dataset.f;renderWizard();});
+    const inp=document.getElementById('wzOtherFrame');
+    if(inp)inp.oninput=()=>{WZSTATE.otherFrame=inp.value;WZSTATE.frame=-1;};
+  }
+  if(step==='destination'){
+    m.querySelectorAll('.opt[data-k]').forEach(o=>o.onclick=()=>{
+      WZSTATE[o.dataset.k]=o.dataset.v;renderWizard();});
+  }
+  if(step==='rounds'){
+    m.querySelectorAll('.qo[data-q]').forEach(o=>o.onclick=()=>{
+      WZSTATE.answers[o.dataset.q]=+o.dataset.o;renderWizard();});
+    m.querySelectorAll('input[data-other]').forEach(inp=>{
+      inp.oninput=()=>{WZSTATE.answers[inp.dataset.other]='other:'+inp.value;renderWizard();};
+    });
+  }
+  if(step==='prd'){
+    const nm=document.getElementById('wzProjName');
+    if(nm)nm.oninput=()=>{
+      WZSTATE.projName=nm.value;
+      const hint=nm.parentNode.querySelector('.hint');
+      if(hint)hint.textContent=t('wiz.prd.projectHint',{slug:wzSlug(nm.value)});
+    };
+  }
+}
+
+function wzPrimary(){
+  const step=WIZ_STEPS[WZSTATE.step];
+  const dis=wzCanAdvance()?'':' disabled';
+  if(step==='rounds'){
+    const last=WZSTATE.round>=WIZ.rounds.length-1;
+    const ok=wzRoundAnswered(WZSTATE.round);
+    return '<button class="btn" id="wzAcceptAll">'+t('wiz.rounds.acceptAll')+'</button>'+
+      '<button class="btn btn-p" id="wzNextBtn"'+(ok?'':' disabled')+'>'+
+      (last?t('wiz.next'):t('wiz.rounds.submit'))+'</button>';
+  }
+  if(step==='prd')
+    return '<button class="btn" id="wzEditBtn">'+t('wiz.prd.edit')+'</button>'+
+      '<button class="btn btn-p" id="wzCreateBtn">'+t('wiz.prd.approve')+'</button>';
+  return '<button class="btn btn-p" id="wzNextBtn"'+dis+'>'+t('wiz.next')+'</button>';
+}
+
+function wzWireFoot(){
+  const nx=document.getElementById('wzNextBtn');
+  if(nx)nx.onclick=()=>{
+    const step=WIZ_STEPS[WZSTATE.step];
+    if(step==='seed'){toast(t('toast.wizSeeded'));wzGo(1);return;}
+    if(step==='frame'){toast(t('toast.wizFramed'));wzGo(2);return;}
+    if(step==='destination'){toast(t('toast.wizDest'));wzGo(3);return;}
+    if(step==='rounds'){wzSubmitRound();return;}
+    if(step==='uncertainty'){toast(t('toast.wizProto',{n:WIZ.protos.length}));wzGo(5);return;}
+    wzGo(WZSTATE.step+1);
+  };
+  const aa=document.getElementById('wzAcceptAll');
+  if(aa)aa.onclick=wzAcceptAll;
+  const ed=document.getElementById('wzEditBtn');
+  if(ed)ed.onclick=()=>{WZSTATE.round=0;wzGo(3);};
+  const cr=document.getElementById('wzCreateBtn');
+  if(cr)cr.onclick=wzCreate;
+}
+
+document.getElementById('wzExit').onclick=closeWizard;
+
+/* ==================================================================
+   Settings. Application-level, spanning every project — which is why it
+   is its own window rather than a panel inside a project view.
+   Concurrency is modelled as a scheduler, not a slider: N agents, each on
+   its own branch in its own working copy, all merging into one integration
+   branch. That mirrors how implement-spec actually fans work out.
+   ================================================================== */
+const SET_CATS=[
+  {id:'general',icon:'action',k:'set.cat.general'},
+  {id:'agents',icon:'bolt',k:'set.cat.agents'},
+  {id:'skills',icon:'check',k:'set.cat.skills'},
+  {id:'mcp',icon:'artifact',k:'set.cat.mcp'},
+  {id:'credentials',icon:'gate',k:'set.cat.credentials'},
+  {id:'git',icon:'action',k:'set.cat.git'},
+  {id:'automation',icon:'clock',k:'set.cat.automation'}
+];
+
+const SETTINGS={
+  general:{startup:'portfolio',confirm:true,cost:true,telemetry:false},
+  agents:{
+    cli:'codebuddy',model:'inherit',
+    maxParallel:4,minParallel:1,maxParallelCap:8,
+    isolation:'worktree',
+    copyRoot:'../.worktrees',
+    timeoutMin:30,retries:1,pauseOnGate:false,
+    roleModels:{tech:'inherit',qa:'sonnet',ops:'inherit',security:'opus'}
+  },
+  skills:[
+    {id:'ask-matt',stage:'s1',src:{en:'mattpocock/skills',zh:'mattpocock/skills'},on:true},
+    {id:'grill-with-docs',stage:'s2',src:'mattpocock/skills',on:true},
+    {id:'prototype',stage:'s3',src:'mattpocock/skills',on:true},
+    {id:'to-spec',stage:'s4',src:'mattpocock/skills',on:true},
+    {id:'to-tickets',stage:'s5',src:'mattpocock/skills',on:true},
+    {id:'implement-spec',stage:'s6',src:'mattpocock/skills',on:true},
+    {id:'code-review',stage:'s7',src:'mattpocock/skills',on:true},
+    {id:'',stage:'s8',src:{en:'CI — no skill',zh:'CI —— 无 skill'},on:true,manual:true},
+    {id:'retro',stage:'s9',src:'mattpocock/skills',on:true}
+  ],
+  skillPool:[
+    {id:'triage',src:'mattpocock/skills',note:{en:'on-ramp for incoming issues',zh:'外来 issue 的入口'}},
+    {id:'wayfinder',src:'mattpocock/skills',note:{en:'on-ramp for efforts too big for one session',zh:'超出单次会话的大工程的入口'}},
+    {id:'diagnosing-bugs',src:'mattpocock/skills',note:{en:'on-ramp for the bug that resists a first look',zh:'一眼看不出的 bug 的入口'}},
+    {id:'wizard',src:'mattpocock/skills',note:{en:'steps only a human can take',zh:'只有人能做的步骤'}},
+    {id:'research',src:'mattpocock/skills',note:{en:'background reading against primary sources',zh:'对着原始资料做后台阅读'}},
+    {id:'tdd',src:'mattpocock/skills',note:{en:'driven by implement-spec, not usually run alone',zh:'由 implement-spec 驱动，一般不单独跑'}}
+  ],
+  mcp:[
+    {name:'filesystem',transport:'stdio',cmd:'npx -y @modelcontextprotocol/server-filesystem',scope:['s2','s3','s4','s6','s7'],status:'ok',env:2},
+    {name:'git',transport:'stdio',cmd:'mcp-server-git --repository .',scope:['s6','s7'],status:'ok',env:1},
+    {name:'github',transport:'http',cmd:'https://api.githubcopilot.com/mcp/',scope:['s5','s8'],status:'error',env:1,
+     err:{en:'Last handshake failed: token expired 4 hours ago.',zh:'上次握手失败：token 4 小时前过期了。'}},
+    {name:'playwright',transport:'stdio',cmd:'npx @playwright/mcp@latest',scope:['s7'],status:'ok',env:0},
+    {name:'browser-use',transport:'stdio',cmd:'browser-use serve',scope:['s3'],status:'off',env:3}
+  ],
+  credentials:[
+    {provider:{en:'Anthropic',zh:'Anthropic'},mask:'sk-ant-••••••••••••7f2c',store:'keychain',
+     usedBy:{en:'every stage',zh:'所有阶段'}},
+    {provider:{en:'GitHub',zh:'GitHub'},mask:'ghp_•••••••••••••••d41a',store:'keychain',
+     usedBy:{en:'ticketing, release',zh:'拆片、发布'}},
+    {provider:{en:'Deploy target',zh:'部署目标'},mask:'ssh-ed25519 ••••3nQ',store:'ci',
+     usedBy:{en:'release',zh:'发布'}}
+  ],
+  git:{branch:'feat/{ticket}',integration:'integration/{project}',sign:true,pr:true,cleanup:true},
+  automation:{afk:false,autoMerge:false,maxWaitH:24,summary:true}
+};
+
+const SETSTATE={open:false,cat:'general'};
+
+function setCat(){return SETSTATE.cat;}
+function setVal(path){
+  const parts=path.split('.');
+  let o=SETTINGS;
+  for(let i=0;i<parts.length-1;i++)o=o[parts[i]];
+  return o[parts[parts.length-1]];
+}
+function setMax(n){
+  const a=SETTINGS.agents;
+  const clamped=Math.max(a.minParallel,Math.min(a.maxParallelCap,Math.round(n)||a.minParallel));
+  const didClamp=clamped!==n;
+  a.maxParallel=clamped;
+  if(didClamp)toast(t('toast.setClamped',{min:a.minParallel,max:a.maxParallelCap,n:clamped}));
+  return clamped;
+}
+/* A project fresh out of concept init has no CI/log entries, so read defensively. */
+function runningAgents(){
+  return Object.keys(PROJECTS).reduce((n,k)=>{
+    const q=PROJECTS[k];
+    return n+(q.running||0);
+  },0);
+}
+function frontierSlices(){
+  let n=0;
+  Object.keys(PROJECTS).forEach(k=>{
+    PROJECTS[k].tickets.forEach(tk=>{if(tk.s==='ready')n++;});
+  });
+  return n;
+}
+function integrationBranch(){
+  const p=PROJECTS[STATE.project];
+  return SETTINGS.git.integration.replace('{project}',p?p.name:'project');
+}
+function skillAt(stage){
+  for(let i=0;i<SETTINGS.skills.length;i++)
+    if(SETTINGS.skills[i].stage===stage)return SETTINGS.skills[i];
+  return null;
+}
+function skillEnabled(stage){const s=skillAt(stage);return s?!s.on||s.manual?false:true:false;}
+
+function openSettings(cat){
+  SETSTATE.open=true;
+  /* Opening with no argument is an explicit "show me Settings", so land somewhere
+   * predictable rather than wherever the window was last left. */
+  SETSTATE.cat=cat||'general';
+  document.getElementById('settings').classList.add('on');
+  renderSettings();
+}
+function closeSettings(){
+  SETSTATE.open=false;
+  document.getElementById('settings').classList.remove('on');
+  renderAll();
+}
+
+function renderSettings(){
+  if(!SETSTATE.open)return;
+  document.getElementById('setTitle').textContent=t('set.title');
+  document.getElementById('setScope').textContent=t('set.crumb.thisMachine');
+  document.getElementById('setApplies').textContent=t('set.applies');
+  document.getElementById('setDone').textContent=t('set.done');
+  document.getElementById('setRail').innerHTML=SET_CATS.map(c=>
+    '<div class="set-cat'+(SETSTATE.cat===c.id?' on':'')+'" data-c="'+c.id+'">'+
+    svg(ICON[c.icon])+'<span>'+t(c.k)+'</span></div>').join('');
+  document.querySelectorAll('#setRail .set-cat').forEach(e=>
+    e.onclick=()=>{SETSTATE.cat=e.dataset.c;renderSettings();});
+  const m=document.getElementById('setMain');
+  m.innerHTML=setCat()==='general'?setGeneral()
+    :setCat()==='agents'?setAgents()
+    :setCat()==='skills'?setSkills()
+    :setCat()==='mcp'?setMcp()
+    :setCat()==='credentials'?setCred()
+    :setCat()==='git'?setGit():setAuto();
+  bindSettings();
+}
+
+function srow(label,desc,ctl){
+  return '<div class="srow"><div class="sbody"><div class="slabel">'+label+'</div>'+
+    (desc?'<div class="sdesc">'+desc+'</div>':'')+'</div>'+
+    '<div class="sctl">'+ctl+'</div></div>';
+}
+function sw2(on,path,disabled){
+  return '<button class="sw2'+(on?' on':'')+'" data-t="'+path+'"'+(disabled?' disabled':'')+'></button>';
+}
+function sec(title,lede,body){
+  return '<div class="set-sec"><h3>'+title+'</h3>'+(lede?'<p class="lede">'+lede+'</p>':'')+body+'</div>';
+}
+
+function setGeneral(){
+  const g=SETTINGS.general;
+  return sec(t('set.cat.general'),'',
+    srow(t('set.general.startup'),'',
+      '<select class="gsel" data-t="general.startup" style="font:inherit;font-size:12.5px;padding:5px 9px;border-radius:9px;border:.5px solid var(--sep);background:#fff">'+
+      '<option value="portfolio"'+(g.startup==='portfolio'?' selected':'')+'>'+t('set.general.startup.portfolio')+'</option>'+
+      '<option value="last"'+(g.startup==='last'?' selected':'')+'>'+t('set.general.startup.last')+'</option>'+
+      '</select>')+
+    srow(t('set.general.confirm'),'',sw2(g.confirm,'general.confirm'))+
+    srow(t('set.general.cost'),'',sw2(g.cost,'general.cost'))+
+    srow(t('set.general.telemetry'),t('set.general.telemetryNote'),sw2(g.telemetry,'general.telemetry'))
+  );
+}
+
+function setAgents(){
+  const a=SETTINGS.agents;
+  const busy=Math.min(runningAgents(),a.maxParallel);
+  const free=Math.max(0,a.maxParallel-busy);
+  const assign=['T3 · camera-analytics','T4 · camera-analytics'];
+  let slots='';
+  for(let i=0;i<a.maxParallel;i++){
+    const on=i<busy;
+    slots+='<div class="slot'+(on?' busy':'')+'"><div class="sk">'+
+      (on?'<span class="spinner" style="width:8px;height:8px;flex:0 0 8px"></span>':'')+
+      t('set.agents.worker',{n:i+1})+' — '+(on?t('seg.pipeline')===t('seg.pipeline')?stageName('s6'):'' : t('set.agents.idle'))+
+      '</div><div class="sb">'+(on?(assign[i]||('feat/T'+(i+3))):'—')+'</div></div>';
+  }
+  const isoBody=['worktree','container','vm'].map(id=>{
+    const on=a.isolation===id;
+    return '<div class="opt'+(on?' on':'')+'" data-t="agents.isolation" data-v="'+id+'" style="margin-bottom:8px">'+
+      '<span class="rad"></span><div class="ob"><div class="ot">'+t('set.agents.iso.'+id)+'</div>'+
+      '<div class="od">'+t('set.agents.iso.'+id+'.d')+'</div></div></div>';
+  }).join('');
+  return sec(t('set.agents.runtime'),'',
+      srow(t('set.agents.cli'),'',
+        '<span class="keybox">'+a.cli+'</span>')+
+      srow(t('set.agents.model'),'',
+        '<span class="keybox">'+t('set.agents.model.inherit')+'</span>')+
+      srow(t('set.agents.roleModels'),t('set.agents.roleModelsNote'),
+        ROLE_KEYS.filter(r=>r!=='po'&&r!=='client').map(r=>
+          '<span class="keybox" title="'+t('role.'+r)+'">'+t('role.'+r).slice(0,6)+' → '+(a.roleModels[r]||'inherit')+'</span>').join(''))
+    )+
+  sec(t('set.agents.concurrency'),t('set.agents.maxHint'),
+      srow(t('set.agents.max'),'',
+        '<div class="stepper">'+
+        '<button data-step="-1"'+(a.maxParallel<=a.minParallel?' disabled':'')+'>−</button>'+
+        '<span class="val" id="maxVal">'+a.maxParallel+'</span>'+
+        '<button data-step="1"'+(a.maxParallel>=a.maxParallelCap?' disabled':'')+'>+</button>'+
+        '</div>')+
+      '<div style="padding:12px 0 0"><div class="slabel" style="font-size:12.5px;font-weight:500">'+
+        t('set.agents.slots')+'</div>'+
+      '<div class="slots">'+slots+'</div>'+
+      '<div class="flowline">'+
+        '<span>'+t('set.agents.frontierN',{n:frontierSlices()})+'</span>'+
+        '<span class="arrow">→</span>'+
+        '<span>'+busy+' / '+a.maxParallel+'</span>'+
+        '<span class="arrow">→</span>'+
+        '<span>'+t('set.agents.mergesInto')+' <code>'+integrationBranch()+'</code></span>'+
+        '<span class="arrow">·</span>'+
+        '<span>'+(free?t('set.agents.free',{n:free}):t('set.agents.full'))+'</span>'+
+      '</div></div>')+
+    sec(t('set.agents.isolation'),'',isoBody)+
+    sec('',
+      srow(t('set.agents.copyRoot'),t('set.agents.copyRootNote'),
+        '<span class="keybox">'+a.copyRoot+'</span>')+
+      srow(t('set.agents.timeout'),'',
+        '<div class="stepper">'+
+        '<button data-timeout="-5">−</button>'+
+        '<span class="val" id="tmoVal">'+t('set.agents.timeoutUnit',{n:a.timeoutMin})+'</span>'+
+        '<button data-timeout="5">+</button></div>')+
+      srow(t('set.agents.retries'),'',
+        '<div class="stepper">'+
+        '<button data-retry="-1"'+(a.retries<=0?' disabled':'')+'>−</button>'+
+        '<span class="val" id="retVal">'+a.retries+'</span>'+
+        '<button data-retry="1"'+(a.retries>=5?' disabled':'')+'>+</button></div>')+
+      srow(t('set.agents.pauseOnGate'),t('set.agents.pauseOnGateNote'),sw2(a.pauseOnGate,'agents.pauseOnGate'))
+    );
+}
+
+function setSkills(){
+  const on=SETTINGS.skills.filter(s=>s.on).length;
+  const rows=SETTINGS.skills.map(s=>{
+    const nm=s.id||t('set.skills.none');
+    return '<tr><td class="n"'+(s.manual?' style="color:var(--label-3);font-weight:400"':'')+'>'+nm+
+      (s.on?'':' <span class="pill p-red">'+t('set.skills.disabled')+'</span>')+'</td>'+
+      '<td>'+stageName(s.stage)+'</td>'+
+      '<td class="mono">'+L(s.src)+'</td>'+
+      '<td><button class="sw2'+(s.on?' on':'')+'" data-skill="'+s.stage+'"'+(s.manual?' disabled':'')+'></button></td></tr>';
+  }).join('');
+  return sec(t('set.cat.skills'),t('set.skills.body'),
+      '<table class="st"><thead><tr>'+
+      '<th>'+t('set.skills.col.skill')+'</th><th>'+t('set.skills.col.stage')+'</th>'+
+      '<th>'+t('set.skills.col.source')+'</th><th>'+t('set.skills.col.state')+'</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="set-hint">'+t('set.skills.onN',{n:on,total:SETTINGS.skills.length})+' · '+
+      t('set.skills.offNote')+' '+t('set.skills.manualNote')+'</div>')+
+    sec(t('set.skills.pool'),'',
+      '<div class="pool">'+SETTINGS.skillPool.map(s=>
+        '<span class="pill p-gray" title="'+L(s.note)+'">'+s.id+'</span>').join('')+'</div>'+
+      '<div class="set-hint">'+SETTINGS.skillPool.map(s=>s.id).length+' skills · '+
+        L({en:'available on demand, not part of the automatic chain',
+           zh:'按需调用，不在自动链路上'})+'</div>');
+}
+
+function setMcp(){
+  const rows=SETTINGS.mcp.map((s,i)=>{
+    const st=s.status==='ok'?'p-green':s.status==='error'?'p-red':'p-gray';
+    const stLbl=s.status==='ok'?t('set.mcp.connected'):s.status==='error'?t('set.mcp.error'):t('set.mcp.off');
+    return '<tr><td class="n">'+s.name+'<div class="mono" style="color:var(--label-3);font-weight:400">'+
+      s.cmd.slice(0,44)+(s.cmd.length>44?'…':'')+'</div></td>'+
+      '<td><span class="pill p-gray">'+s.transport+'</span></td>'+
+      '<td style="font-size:11.5px">'+s.scope.map(x=>t('stageshort.'+x)).join(' · ')+
+        (s.env?'<div style="color:var(--label-3);margin-top:3px">'+t('set.mcp.env',{n:s.env})+'</div>':'')+'</td>'+
+      '<td><span class="pill '+st+'">'+stLbl+'</span></td>'+
+      '<td style="white-space:nowrap"><button class="mini-btn" data-mcptest="'+i+'">'+t('set.mcp.test')+'</button> '+
+        '<button class="mini-btn danger" data-mcpdel="'+i+'">'+t('set.mcp.remove')+'</button></td></tr>';
+  }).join('');
+  const err=SETTINGS.mcp.filter(s=>s.status==='error');
+  return sec(t('set.cat.mcp'),t('set.mcp.body'),
+      (err.length?'<div class="wz-warn">'+svg(ICON.bolt)+'<span><b>'+err[0].name+':</b> '+
+        L(err[0].err)+' '+t('set.mcp.errNote')+'</span></div>':'')+
+      '<table class="st"><thead><tr>'+
+      '<th>'+t('set.mcp.col.server')+'</th><th>'+t('set.mcp.col.transport')+'</th>'+
+      '<th>'+t('set.mcp.col.scope')+'</th><th>'+t('set.mcp.col.state')+'</th><th></th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div style="margin-top:12px"><button class="mini-btn" id="mcpAdd">+ '+t('set.mcp.add')+'</button></div>');
+}
+
+function setCred(){
+  const rows=SETTINGS.credentials.map((c,i)=>
+    '<tr><td class="n">'+L(c.provider)+'</td>'+
+    '<td><span class="keybox">'+c.mask+'</span></td>'+
+    '<td><span class="pill '+(c.store==='keychain'?'p-teal':'p-blue')+'">'+
+      (c.store==='keychain'?t('set.cred.keychain'):t('set.cred.ci'))+'</span></td>'+
+    '<td style="font-size:11.5px">'+L(c.usedBy)+'</td>'+
+    '<td><button class="mini-btn" data-rotate="'+i+'">'+t('set.cred.rotate')+'</button></td></tr>').join('');
+  return sec(t('set.cat.credentials'),t('set.cred.body'),
+      '<table class="st"><thead><tr>'+
+      '<th>'+t('set.cred.col.provider')+'</th><th>Key</th>'+
+      '<th>'+t('set.cred.col.stored')+'</th><th>'+t('set.cred.col.usedBy')+'</th><th></th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div style="margin-top:12px"><button class="mini-btn" id="credAdd">+ '+t('set.cred.add')+'</button></div>'+
+      '<div class="wz-warn" style="margin-top:16px;margin-bottom:0">'+svg(ICON.gate)+
+      '<span>'+t('set.cred.warn')+'</span></div>');
+}
+
+function setGit(){
+  const g=SETTINGS.git;
+  return sec(t('set.cat.git'),t('set.git.body'),
+      srow(t('set.git.branch'),t('set.git.branchNote'),
+        '<span class="keybox">'+g.branch+'</span>')+
+      srow(t('set.git.integration'),'',
+        '<span class="keybox">'+g.integration.replace('{project}',PROJECTS[STATE.project]?PROJECTS[STATE.project].name:'project')+'</span>')+
+      srow(t('set.git.sign'),'',sw2(g.sign,'git.sign'))+
+      srow(t('set.git.pr'),'',sw2(g.pr,'git.pr'))+
+      srow(t('set.git.cleanup'),'',sw2(g.cleanup,'git.cleanup'))
+    );
+}
+
+function setAuto(){
+  const a=SETTINGS.automation;
+  return sec(t('set.cat.automation'),t('set.auto.body'),
+      srow(t('set.auto.afk'),'',sw2(a.afk,'automation.afk'))+
+      srow(t('set.auto.autoMerge'),t('set.auto.autoMergeNote'),sw2(a.autoMerge,'automation.autoMerge'))+
+      srow(t('set.auto.maxWait',{n:a.maxWaitH}),'',
+        '<div class="stepper">'+
+        '<button data-wait="-12">−</button>'+
+        '<span class="val" id="waitVal">'+a.maxWaitH+'h</span>'+
+        '<button data-wait="12">+</button></div>')+
+      srow(t('set.auto.summary'),'',sw2(a.summary,'automation.summary'))
+    );
+}
+
+function bindSettings(){
+  const m=document.getElementById('setMain');
+  m.querySelectorAll('.sw2[data-t]').forEach(b=>b.onclick=()=>{
+    const path=b.dataset.t,parts=path.split('.');
+    let o=SETTINGS;
+    for(let i=0;i<parts.length-1;i++)o=o[parts[i]];
+    o[parts[parts.length-1]]=!o[parts[parts.length-1]];
+    renderSettings();
+    toast(t('toast.setSaved',{label:labelForSet(parts[parts.length-1])}));
+  });
+  m.querySelectorAll('select[data-t]').forEach(s=>s.onchange=()=>{
+    const path=s.dataset.t,parts=path.split('.');
+    let o=SETTINGS;
+    for(let i=0;i<parts.length-1;i++)o=o[parts[i]];
+    o[parts[parts.length-1]]=s.value;
+    renderSettings();
+  });
+  /* concurrency stepper — the fixture that proves the number is not cosmetic */
+  m.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
+    setMax(SETTINGS.agents.maxParallel+ +b.dataset.step);
+    renderSettings();renderStatusbar();
+  });
+  m.querySelectorAll('[data-timeout]').forEach(b=>b.onclick=()=>{
+    SETTINGS.agents.timeoutMin=Math.max(5,Math.min(240,SETTINGS.agents.timeoutMin+ +b.dataset.timeout));
+    renderSettings();
+  });
+  m.querySelectorAll('[data-retry]').forEach(b=>b.onclick=()=>{
+    SETTINGS.agents.retries=Math.max(0,Math.min(5,SETTINGS.agents.retries+ +b.dataset.retry));
+    renderSettings();
+  });
+  m.querySelectorAll('[data-wait]').forEach(b=>b.onclick=()=>{
+    SETTINGS.automation.maxWaitH=Math.max(1,Math.min(168,SETTINGS.automation.maxWaitH+ +b.dataset.wait));
+    renderSettings();
+  });
+  m.querySelectorAll('.opt[data-t="agents.isolation"]').forEach(o=>o.onclick=()=>{
+    SETTINGS.agents.isolation=o.dataset.v;renderSettings();
+    toast(t('toast.setSaved',{label:labelForSet('isolation')}));
+  });
+  m.querySelectorAll('.sw2[data-skill]').forEach(b=>b.onclick=()=>{
+    const s=skillAt(b.dataset.skill);
+    if(!s||s.manual)return;
+    s.on=!s.on;
+    renderSettings();
+    toast(s.on?t('toast.skillOn',{name:s.id}):t('toast.skillOff',{name:s.id}));
+  });
+  m.querySelectorAll('[data-mcptest]').forEach(b=>b.onclick=()=>{
+    const s=SETTINGS.mcp[+b.dataset.mcptest];
+    const ok=s.status!=='error';
+    s.status=ok?'ok':'error';
+    renderSettings();
+    toast(t('toast.mcpTested',{name:s.name,result:ok?t('set.mcp.connected'):t('set.mcp.error')}));
+  });
+  m.querySelectorAll('[data-mcpdel]').forEach(b=>b.onclick=()=>{
+    const s=SETTINGS.mcp[+b.dataset.mcpdel];
+    SETTINGS.mcp.splice(+b.dataset.mcpdel,1);
+    renderSettings();
+    toast(t('toast.mcpRemoved',{name:s.name}));
+  });
+  const add=document.getElementById('mcpAdd');
+  if(add)add.onclick=()=>{
+    SETTINGS.mcp.push({name:'new-server',transport:'stdio',cmd:'npx -y @scope/server',
+      scope:['s6'],status:'off',env:0});
+    renderSettings();
+    toast(t('toast.mcpAdded',{name:'new-server'}));
+  };
+  m.querySelectorAll('[data-rotate]').forEach(b=>b.onclick=()=>{
+    const c=SETTINGS.credentials[+b.dataset.rotate];
+    toast(t('toast.credRotate',{provider:L(c.provider)}));
+  });
+  const ca=document.getElementById('credAdd');
+  if(ca)ca.onclick=()=>toast(t('toast.newProject'));
+}
+function labelForSet(key){
+  const m={confirm:'set.general.confirm',cost:'set.general.cost',telemetry:'set.general.telemetry',
+    pauseOnGate:'set.agents.pauseOnGate',isolation:'set.agents.isolation',
+    sign:'set.git.sign',pr:'set.git.pr',cleanup:'set.git.cleanup',
+    afk:'set.auto.afk',autoMerge:'set.auto.autoMerge',summary:'set.auto.summary'};
+  return m[key]?t(m[key]):key;
+}
+
+const MENU_SPECS=[
+ {title:'menu.file',items:[
+   {l:'file.new',k:'⌘N',a:'newProject'},
+   {l:'file.open',k:'⌘O',a:'openWs'},
+   {l:'file.import',a:'importRepo'},
+   {l:'file.rescan',a:'rescan'},
+   '-',
+   {l:'file.settings',k:'⌘,',a:'settings'},
+   {l:'file.close',dis:true}
+ ],dynamic:'goto'},
+ {title:'menu.edit',items:[
+   {l:'edit.undo',k:'⌘Z',dis:true},{l:'edit.redo',k:'⇧⌘Z',dis:true},
+   '-',
+   {l:'edit.copyDossier',k:'⌘C',a:'copyDossier'},
+   {l:'edit.exportAudit',a:'exportAudit'},
+   '-',
+   {l:'edit.approveAll',k:'⌘⏎',a:'approveAll'}
+ ]},
+ {title:'menu.view',items:[
+   {l:'view.portfolio',k:'⌘0',a:'pview:overview',c:'overview'},
+   {l:'view.roadmap',k:'⌘6',a:'pview:timeline',c:'timeline'},
+   {l:'view.activity',k:'⌘7',a:'pview:activity',c:'activity'},
+   '-',
+   {l:'view.pipeline',k:'⌘1',a:'view:pipeline',c:'pipeline',proj:true},
+   {l:'view.board',k:'⌘2',a:'view:board',c:'board',proj:true},
+   {l:'view.inbox',k:'⌘3',a:'view:inbox',c:'inbox',proj:true},
+   {l:'view.releases',k:'⌘4',a:'view:releases',c:'releases',proj:true},
+   {l:'view.records',k:'⌘5',a:'view:records',c:'records',proj:true},
+   '-',
+   {l:'view.sidebar',k:'⌃⌘S',a:'toggleSidebar',c:'sidebar'},
+   {l:'view.inspector',k:'⌥⌘I',a:'toggleInspector',c:'inspector'},
+   '-',
+   {sub:'lang'}
+ ]},
+ {title:'menu.run',items:[
+   {l:'run.advance',k:'⌘R',a:'advance'},
+   {l:'run.rerun',a:'rerun'},
+   '-',
+   {l:'run.afk',a:'toggleAfk',c:'afk'},
+   {l:'run.pauseAll',a:'pauseAll'},
+   '-',
+   {l:'run.insertGate',k:'⌘G',a:'insertGate'}
+ ]},
+ {title:'menu.gates',items:[
+   {l:'gates.defaults',a:'gateDefaults'},
+   {l:'gates.presets',sub:[
+     {l:'gates.strict',a:'preset:strict'},
+     {l:'gates.standard',a:'preset:standard'},
+     {l:'gates.loose',a:'preset:loose'}
+   ]},
+   '-',
+   {l:'gates.roles',k:'⇧⌘R',a:'assignRoles'}
+ ]},
+ {title:'menu.help',items:[
+   {l:'help.flow',a:'helpFlow'},
+   {l:'help.skills',a:'helpSkills'},
+   '-',
+   {l:'help.about',a:'about'}
+ ]}
+];
+
+const PROJECTS={
+  camera:{
+    name:'camera-analytics',
+    mode:{en:'Local workspace',zh:'本地工作区'},
+    branch:'integration/camera-analytics',
+    dot:'run',blk:2,running:2,
+    updated:'16:41',
+    note:{en:'Commit a91c2fe on T3; /tdd went red-to-green across 4 slices',
+          zh:'T3 产出提交 a91c2fe，/tdd 红→绿 4 个切片'},
+    commits:11,
+    pipeline:[
+      {n:'s1',s:'done',sk:{en:'workflow path selection',zh:'选择工作流路径'}},
+      {n:'s2',s:'done',sk:'/grill-with-docs',g:true},
+      {n:'s3',s:'done',sk:'/prototype + /handoff',g:true},
+      {n:'s4',s:'done',sk:'/to-spec'},
+      {n:'s5',s:'blocked',sk:['/to-tickets',{en:'awaiting approval',zh:'待批准'}],g:true},
+      {n:'s6',s:'active',sk:'/implement-spec + /tdd',g:true},
+      {n:'s7',s:'pending',sk:'/code-review',g:true},
+      {n:'s8',s:'pending',sk:'CI / CD',g:true},
+      {n:'s9',s:'pending',sk:'/retro'}
+    ],
+    records:{
+      1:{stage:'s1',skill:{en:'workflow path selection',zh:'选择工作流路径'},
+        run:'15:52 → 15:58',by:{en:'you',zh:'你'},status:'done',
+        inputs:[{en:'Empty repo · no upstream',zh:'空仓库 · 无上游'}],
+        actions:[{en:'2 turns of dialogue',zh:'2 轮对话'},
+                 {en:'Judged a normal main flow, no /wayfinder',zh:'判定为常规主链路，不走 /wayfinder'}],
+        artifacts:[{en:'Created .scratch/camera-analytics/',zh:'.scratch/camera-analytics/ 目录建立'}],
+        gates:[{en:'no gates',zh:'无门'}],
+        verdict:{by:null,method:null,evidence:null,at:'15:58',result:'done'}},
+      2:{stage:'s2',skill:'/grill-with-docs',
+        run:'16:07 → 16:44',by:{en:'you',zh:'你'},status:'done',
+        inputs:['run 15:52 upstream','research/throughput-notes.md',
+                {en:'ADR-0006 (capture protocol)',zh:'ADR-0006（采集协议）'}],
+        actions:[{en:'7 rounds of questioning',zh:'7 轮追问'},
+                 {en:'23 tool calls',zh:'23 次工具调用'},
+                 {en:'2 reads of the existing capture code',zh:'2 次读现有采集代码'}],
+        artifacts:[
+          {en:'GLOSSARY.md +6 terms (frame · batch · lanes · alert threshold · cold storage · return window)',
+           zh:'GLOSSARY.md +6 术语（帧 · 批次 · 路数 · 告警阈值 · 冷存 · 回传窗口）'},
+          {en:'ADR-0007 added: analysis results retained 90 days',zh:'ADR-0007 新增：分析结果保留 90 天'},
+          {en:'spec.md @3f1d (draft)',zh:'spec.md @3f1d（草稿）'}],
+        gates:[{en:'3 automated passed',zh:'自动 3 通过'},
+               {en:'2 human (2/2 questions answered)',zh:'人工 2（追问 2/2 已答）'}],
+        verdict:{by:'po',method:['signoff','cross'],
+          evidence:{en:'2 answered questions + the throughput research note',zh:'2 项追问回答 + 吞吐研究笔记'},
+          at:'16:44',result:'done'}},
+      3:{stage:'s3',skill:'/prototype + /handoff',
+        run:'16:46 → 17:05',by:{en:'you',zh:'你'},status:'done',
+        inputs:['spec.md @3f1d'],
+        actions:[{en:'1 LOGIC prototype: batch queue state machine',zh:'LOGIC 原型 ×1：批处理队列状态机'},
+                 {en:'You drove 6 cases and rejected 1 transition',zh:'你驱动 6 个用例，否决其中 1 个状态转移'}],
+        artifacts:[{en:'Branch prototype/batch-queue kept as a primary source',zh:'分支 prototype/batch-queue（保留为主源）'},
+                   {en:'ADR-0008 added: the queue uses backpressure, not frame drops',zh:'ADR-0008 新增：队列用背压而非丢帧'}],
+        gates:[{en:'1 human (adopt or reject)',zh:'人工 1（采纳与否决）'}],
+        verdict:{by:'po',method:['signoff'],
+          evidence:{en:'The prototype branch + 1 recorded rejection',zh:'原型分支 + 1 条否决记录'},
+          at:'17:05',result:'done'}},
+      4:{stage:'s4',skill:'/to-spec',
+        run:'17:06 → 17:14',by:{en:'agent',zh:'agent'},status:'done',
+        inputs:[{en:'All upstream artifacts',zh:'上游全部产物'}],
+        actions:[{en:'Synthesised the spec, no follow-up interview',zh:'合成 spec，不追加采访'},
+                 {en:'Proposed the test seam: a single HTTP boundary',zh:'提出测试缝：单条 HTTP 边界'}],
+        artifacts:[{en:'spec.md @6c02 (final)',zh:'spec.md @6c02（定稿）'}],
+        gates:[{en:'1 automated passed',zh:'自动 1 通过'},
+               {en:'1 human (test seam confirmation)',zh:'人工 1（测试缝确认）'}],
+        verdict:{by:'tech',method:['lateral'],
+          evidence:{en:'A parallel agent re-checked the seam placement',zh:'平行 agent 复核测试缝位置'},
+          at:'17:14',result:'done'}},
+      5:{stage:'s5',skill:'/to-tickets',
+        run:'17:15 → 17:22',by:{en:'agent',zh:'agent'},status:'pending',
+        inputs:['spec.md @6c02'],
+        actions:[{en:'Cut 7 vertical slices',zh:'拆出 7 个垂直切片'},
+                 {en:'Second pass wired the blocking edges',zh:'二轮连边（先建后连）'},
+                 {en:'Wide-refactor check: none',zh:'宽重构检查：无'}],
+        artifacts:[{en:'.scratch/camera-analytics/issues/01..07',zh:'.scratch/camera-analytics/issues/01..07'},
+                   {en:'Blocking edges written to the tracker',zh:'依赖边写入 tracker'}],
+        gates:[{en:'1 automated passed',zh:'自动 1 通过'},
+               {en:'1 human awaiting your approval',zh:'人工 1 待你批准'}],
+        verdict:{by:'po',method:['signoff','lateral'],
+          evidence:{en:'Awaiting approval',zh:'待批'},at:null,result:'pending'}},
+      6:{stage:'s6',skill:'/implement-spec + /tdd',
+        run:{en:'17:23 → now',zh:'17:23 → 至今'},by:{en:'agent',zh:'agent'},status:'running',
+        inputs:[{en:'issues/01..07',zh:'issues/01..07'},{en:'integration branch',zh:'integration branch'}],
+        actions:[{en:'2 implementer subagents in parallel, each in its own worktree',zh:'2 个 implementer 子 agent 并行，各在自己 worktree'},
+                 {en:'T1 and T2 merged; T3 in flight; T4 ready',zh:'T1、T2 已合并；T3 进行中；T4 已就绪'}],
+        artifacts:[{en:'Commit a91c2fe (T3 red-to-green across 4 slices)',zh:'提交 a91c2fe（T3 红→绿 4 个切片）'},
+                   {en:'integration/camera-analytics is 11 commits ahead of main',zh:'integration/camera-analytics 领先 main 11 个提交'}],
+        gates:[{en:'2 automated passed · 1 failed then fixed',zh:'自动 2 通过 · 1 失败后被修复'},
+               {en:'1 human awaiting your ruling (performance evidence)',zh:'人工 1 待裁决（性能证据）'}],
+        verdict:{by:null,method:null,evidence:null,at:null,result:'running'}},
+      7:{stage:'s7',skill:{en:'/code-review (Standards + Spec, two axes)',zh:'/code-review（Standards + Spec 双轴）'},
+        run:'—',by:null,status:'todo',inputs:['—'],actions:['—'],artifacts:['—'],gates:['—'],
+        verdict:{by:null,method:null,evidence:null,at:null,result:'todo'}},
+      8:{stage:'s8',skill:'CI / CD',run:'—',by:null,status:'todo',
+        inputs:['—'],actions:['—'],artifacts:['—'],gates:['—'],
+        verdict:{by:null,method:null,evidence:null,at:null,result:'todo'}},
+      9:{stage:'s9',skill:'/retro',run:'—',by:null,status:'todo',
+        inputs:['—'],actions:['—'],artifacts:['—'],gates:['—'],
+        verdict:{by:null,method:null,evidence:null,at:null,result:'todo'}}
+    },
+    tickets:[
+      {id:'T1',s:'done',t:{en:'Single frame: capture to analysis to return, end to end',zh:'单帧采集 → 分析 → 回传，端到端打通'},seg:4,d:{en:'No blockers · merged',zh:'无阻塞 · 已合并'},col:1},
+      {id:'T2',s:'done',t:{en:'Capture device registration and heartbeat',zh:'采集设备注册与心跳'},seg:4,d:{en:'Blocked by T1 · merged',zh:'依赖 T1 · 已合并'},col:2},
+      {id:'T3',s:'prog',t:{en:'Live preview page',zh:'实时预览页面'},seg:2,d:{en:'Blocked by T2 · agent running',zh:'依赖 T2 · agent 运行中'},col:3},
+      {id:'T4',s:'ready',t:{en:'Batch frame analysis queue',zh:'批量帧分析队列'},seg:0,d:{en:'Blocked by T2 · startable now',zh:'依赖 T2 · 可立即开工'},col:3},
+      {id:'T5',s:'blocked',t:{en:'Results dashboard and history query',zh:'分析结果看板与历史查询'},seg:0,d:{en:'Blocked by T4',zh:'依赖 T4'},col:4},
+      {id:'T6',s:'blocked',t:{en:'Threshold alerts and notifications',zh:'阈值告警与通知'},seg:0,d:{en:'Blocked by T4',zh:'依赖 T4'},col:4},
+      {id:'T7',s:'blocked',t:{en:'Throughput: 12 fps to 30 fps',zh:'吞吐优化：12 fps → 30 fps'},seg:0,d:{en:'Blocked by T5, T6 · see inbox',zh:'依赖 T5、T6 · 见收件箱'},col:5,flag:true}
+    ],
+    gates:[
+      {id:'c1',lv:'warn',icon:'gate',
+       title:{en:'Slice breakdown awaiting approval · 7 vertical slices',zh:'拆片待批准 · 7 个垂直切片'},
+       scope:{en:'Stage 5 · Ticketing',zh:'阶段 5 · 拆片'},
+       trigger:{en:'Automated rule (stage exit)',zh:'自动规则（阶段出口）'},
+       owner:'po',methods:['signoff','lateral'],block:true,
+       body:{en:'Blocking edges are wired so blockers go first; the frontier is T4. Approve and the build stage starts immediately.',
+             zh:'依赖边已按「阻塞块先做」连好，前沿是 T4。批准后建造阶段立即开工。'},
+       btns:[
+         {label:{en:'Approve all',zh:'批准全部'},msg:{en:'Breakdown approved; the build stage has started',zh:'拆分已批准，建造阶段开工'}},
+         {label:{en:'Review one by one',zh:'逐条审阅'},msg:{en:'Switched to item-by-item review',zh:'已进入逐条审阅模式'}},
+         {label:{en:'Send back for re-slicing',zh:'要求重拆'},msg:{en:'Sent back; asked for a finer grain',zh:'已退回，要求更细粒度'}}
+       ]},
+      {id:'c2',lv:'crit',icon:'wrench',
+       title:{en:'Deployment config missing · release blocked',zh:'缺少部署配置 · 发布阶段被阻塞'},
+       scope:{en:'Stage 8 · Release',zh:'阶段 8 · 发布'},
+       trigger:{en:'Automated rule (config probe)',zh:'自动规则（配置探测）'},
+       owner:'ops',methods:['signoff'],block:true,
+       body:{en:'No server or secret configuration found in the repo. This is a step only a human can take, and the agent will not invent credentials.',
+             zh:'仓库中没有服务器 / 密钥配置。这是只有人能做的步骤，agent 不会自行编造凭据。'},
+       btns:[
+         {label:{en:'Generate setup wizard',zh:'生成配置向导'},msg:{en:'Started /wizard: an interactive wizard writing to .env and CI secrets',zh:'已启动 /wizard：生成交互式向导，写入 .env 与 CI secrets'}},
+         {label:{en:'Remind me later',zh:'稍后提醒'},msg:{en:'Muted for 24 hours',zh:'已静音 24 小时'}},
+         {label:{en:'Skip release this time',zh:'本次跳过发布'},msg:{en:'Skipping release; the other stages continue',zh:'本次跳过发布，其余阶段继续'}}
+       ]},
+      {id:'c3',lv:'crit',icon:'bolt',
+       title:{en:'Performance evidence below target · needs your ruling',zh:'性能证据不达标 · 需要你裁决'},
+       scope:{en:'Slice T7',zh:'切片 T7'},
+       trigger:{en:'Automated rule (30 fps threshold)',zh:'自动规则（阈值 30 fps）'},
+       owner:'tech',methods:['cross','signoff'],block:true,
+       body:{en:'Measured throughput is 12 fps against a 30 fps target (evidence: bench/frames-2026-10-12.json). The agent will not lower the target on its own.',
+             zh:'吞吐实测 12 fps，低于目标 30 fps（证据：bench/frames-2026-10-12.json）。agent 不自行下调目标。'},
+       btns:[
+         {label:{en:'Rebuild this slice',zh:'重做该切片'},msg:{en:'T7 sent back to be rebuilt to the new design',zh:'已退回 T7，按新方案重做'}},
+         {label:{en:'Lower the target',zh:'下调目标'},msg:{en:'Target lowered to 15 fps and recorded in an ADR',zh:'目标下调为 15 fps，已记入 ADR'}},
+         {label:{en:'Accept as-is',zh:'接受现状'},msg:{en:'Accepted as a known limitation',zh:'接受当前指标，记为已知限制'}}
+       ]}
+    ],
+    ci:{
+      pipe:[['ok','#482 · integration-branch',{en:'passed · 3m12s',zh:'通过 · 3m12s'}],
+            ['ok','#481 · merged T2',{en:'passed · 2m58s',zh:'通过 · 2m58s'}],
+            ['bad','#480 · T3 first commit',{en:'failed · type error',zh:'失败 · 类型错误'}]],
+      servers:[['ok','staging · 10.0.4.21',{en:'healthy · 12ms',zh:'健康 · 12ms'}],
+               ['warn','prod · 10.0.9.7',{en:'v0.4.1 · unconfigured',zh:'v0.4.1 · 未配置'}]],
+      releases:[['v0.4.2 · 2026-10-12',{en:'awaiting approval',zh:'待批准'}],
+                ['v0.4.1 · 2026-10-09',{en:'released · rollback point',zh:'已发布 · 回滚点'}],
+                ['v0.4.0 · 2026-10-03',{en:'released',zh:'已发布'}]],
+      log:[['16:41',{en:'Build stage produced commit a91c2fe on T3; /tdd went red-to-green across 4 slices',zh:'建造阶段在 T3 产出提交 a91c2fe，/tdd 红→绿 4 个切片'}],
+           ['16:38',{en:'Gate engine ruled T7 needs a human decision and wrote it to the inbox',zh:'门控引擎判定：T7 需要人工裁决，写入收件箱'}],
+           ['16:22',{en:'The two-axis /code-review report was filed under .scratch/camera-analytics/reviews/',zh:'/code-review 双轴报告归档到 .scratch/camera-analytics/reviews/'}],
+           ['16:05',{en:'Slicing done: 7 slices and their blocking edges written to the tracker',zh:'拆片完成，7 个切片 + 依赖边写入 tracker'}]]
+    }
+  },
+
+  foundry:{
+    name:'fenric-foundry',
+    mode:{en:'Local workspace',zh:'本地工作区'},
+    branch:'feature/entitlements',
+    dot:'blk',blk:1,running:0,
+    updated:'15:20',
+    note:{en:'Inserted a gate: architecture choice (RBAC vs ABAC) awaiting approval',
+          zh:'插入验收门：架构选型（RBAC vs ABAC）待批'},
+    commits:4,
+    pipeline:[
+      {n:'s1',s:'done',sk:{en:'workflow path selection',zh:'选择工作流路径'}},
+      {n:'s2',s:'done',sk:'/grill-with-docs',g:true},
+      {n:'s3',s:'done',sk:'/prototype + /handoff',g:true},
+      {n:'s4',s:'active',sk:'/to-spec'},
+      {n:'s5',s:'pending',sk:'/to-tickets'},
+      {n:'s6',s:'pending',sk:'/implement-spec + /tdd'},
+      {n:'s7',s:'pending',sk:'/code-review'},
+      {n:'s8',s:'pending',sk:'CI / CD'},
+      {n:'s9',s:'pending',sk:'/retro'}
+    ],
+    records:{},tickets:[],
+    gates:[
+      {id:'f1',lv:'warn',icon:'gate',
+       title:{en:'Architecture choice awaiting approval · entitlement model',zh:'架构选型待批 · 授权模型'},
+       scope:{en:'Stage 4 · Spec',zh:'阶段 4 · 规格'},
+       trigger:{en:'Inserted via modal (by you at 15:20)',zh:'Modal 插入（你 15:20 挂的）'},
+       owner:'tech',methods:['lateral','adversarial'],block:true,
+       body:{en:'You turned "RBAC or ABAC for the entitlement model" into a gate. A parallel agent produced two arguments and the red team found 3 counterexamples.',
+             zh:'你把「授权模型用 RBAC 还是 ABAC」挂成了门。平行 agent 已出两份论证，红队已给 3 个反例。'},
+       btns:[
+         {label:{en:'Adopt RBAC',zh:'采纳 RBAC'},msg:{en:'RBAC adopted and recorded in an ADR',zh:'已采纳 RBAC，记入 ADR'}},
+         {label:{en:'Adopt ABAC',zh:'采纳 ABAC'},msg:{en:'ABAC adopted and recorded in an ADR',zh:'已采纳 ABAC，记入 ADR'}},
+         {label:{en:'Open another clarification round',zh:'再开一轮澄清'},msg:{en:'Sent back to the clarification stage',zh:'已退回澄清阶段'}}
+       ]}
+    ],
+    ci:{pipe:[['ok','#77 · feature/entitlements',{en:'passed · 1m44s',zh:'通过 · 1m44s'}]],
+        servers:[['ok','staging · 10.0.5.3',{en:'healthy · 8ms',zh:'健康 · 8ms'}]],
+        releases:[['v0.9.0 · 2026-09-28',{en:'released',zh:'已发布'}]],
+        log:[['15:20',{en:'You inserted an acceptance gate: architecture choice',zh:'你插入了一个验收门：架构选型'}]]}
+  },
+
+  railyard:{
+    name:'railyard-docs',
+    mode:{en:'Local workspace',zh:'本地工作区'},
+    branch:'docs/adr-0009',
+    dot:'ok',blk:0,running:0,
+    updated:'14:02',
+    note:{en:'Retro done: added 2 deterministic checks and 1 coding standard',
+          zh:'复盘完成：新增 2 条确定性检查、1 条编码标准'},
+    commits:23,
+    pipeline:[
+      {n:'s1',s:'done',sk:{en:'workflow path selection',zh:'选择工作流路径'}},
+      {n:'s2',s:'done',sk:'/grill-with-docs',g:true},
+      {n:'s3',s:'done',sk:'/prototype + /handoff'},
+      {n:'s4',s:'done',sk:'/to-spec'},
+      {n:'s5',s:'done',sk:'/to-tickets',g:true},
+      {n:'s6',s:'done',sk:'/implement-spec + /tdd'},
+      {n:'s7',s:'done',sk:'/code-review',g:true},
+      {n:'s8',s:'done',sk:'CI / CD'},
+      {n:'s9',s:'done',sk:'/retro',g:true}
+    ],
+    records:{},tickets:[],
+    gates:[
+      {id:'r1',lv:'warn',icon:'clock',
+       title:{en:'External PR awaiting triage',zh:'外部 PR 待分诊'},
+       scope:{en:'On-ramp · /triage',zh:'入口 · /triage'},
+       trigger:{en:'Automated rule (PR probe)',zh:'自动规则（PR 探测）'},
+       owner:'po',methods:['signoff'],block:false,
+       body:{en:'An external PR arrived. Per /triage it counts as input you did not create, so it goes through triage rather than straight to implementation.',
+             zh:'一个外部 PR 到达。按 /triage，它属于"不是你创建的"输入，需要走分诊而不是直接实现。'},
+       btns:[
+         {label:{en:'Accept and slice it',zh:'接受并转切片'},msg:{en:'Converted to an agent-ready issue',zh:'已转为 agent-ready issue'}},
+         {label:{en:'Ask for more information',zh:'要求补充信息'},msg:{en:'Replied asking for reproduction steps',zh:'已回帖要求补充复现步骤'}},
+         {label:{en:'Close',zh:'关闭'},msg:{en:'Closed and marked wontfix',zh:'已关闭，标记 wontfix'}}
+       ]}
+    ],
+    ci:{pipe:[['ok','#210 · docs/adr-0009',{en:'passed · 42s',zh:'通过 · 42s'}]],
+        servers:[['ok','static · edge',{en:'healthy',zh:'健康'}]],
+        releases:[['v0.8.0 · 2026-09-30',{en:'released',zh:'已发布'}]],
+        log:[['14:02',{en:'Retro finished: added 2 deterministic checks and 1 coding standard',zh:'复盘完成：新增 2 条确定性检查、1 条编码标准'}]]}
+  }
+};
+
+const CHIP={done:['p-green','done'],prog:['p-blue','active'],ready:['p-orange','frontier'],blocked:['p-gray','blocked']};
+const TINT={warn:['--orange-t','--orange-d'],crit:['--red-t','--red-d'],ok:['--green-t','--green-d'],info:['--blue-t','--blue-d']};
+
+function P(){return PROJECTS[STATE.project];}
+function keys(){return Object.keys(PROJECTS);}
+function tint(k){const c=TINT[k]||TINT.info;return 'background:var('+c[0]+');color:var('+c[1]+')';}
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');
+  clearTimeout(el._h);el._h=setTimeout(()=>el.classList.remove('on'),2500);}
+function stageName(n){return t('stage.'+n);}
+/* A project straight out of concept init has no CI history yet, so this must not
+ * assume a pipeline entry exists. */
+function ciOf(q){
+  const c=q.ci.pipe&&q.ci.pipe.length?q.ci.pipe[0]:null;
+  if(!c)return {lv:'idle',id:'—',res:t('rel.noRuns')};
+  return {lv:c[0],id:c[1].split(' · ')[0],res:c[2]};
+}
+function dotColor(d){return d==='run'?'var(--blue)':d==='blk'?'var(--red)':'var(--green)';}
+
+let openIdx=null;
+function isChecked(k){
+  if(['overview','timeline','activity'].indexOf(k)>=0)return STATE.scope==='portfolio'&&STATE.pview===k;
+  if(['pipeline','board','inbox','releases','records'].indexOf(k)>=0)
+    return STATE.scope==='project'&&STATE.view===k;
+  if(k==='sidebar')return !document.getElementById('sidebar').classList.contains('collapsed');
+  if(k==='inspector')return !document.getElementById('inspector').classList.contains('collapsed');
+  if(k==='afk')return !!STATE.afk;
+  return false;
+}
+
+function buildMenu(items){
+  return items.map(it=>{
+    if(it==='-')return '<div class="msep"></div>';
+    if(it.sub){
+      let sub=it.sub;
+      if(sub==='lang'){
+        sub=I18N.supported().map(m=>({l:'__lang:'+m.code,a:'lang:'+m.code,label:m.label}));
+        return '<div class="mitem has-sub"><span class="mc"></span><span class="ml">'+t('view.language')+
+          '</span><span class="arw">▶</span><div class="menu">'+
+          sub.map(s=>'<div class="mitem" data-a="'+s.a+'">'+
+            '<span class="mc">'+(I18N.getLocale()===s.a.slice(5)?'✓':'')+'</span>'+
+            '<span class="ml">'+s.label+'</span></div>').join('')+'</div></div>';
+      }
+      return '<div class="mitem has-sub"><span class="mc"></span><span class="ml">'+t(it.l)+
+        '</span><span class="arw">▶</span><div class="menu">'+buildMenu(sub)+'</div></div>';
+    }
+    return '<div class="mitem'+(it.dis?' dis':'')+'"'+(it.a&&!it.dis?' data-a="'+it.a+'"':'')+'>'+
+      '<span class="mc">'+(it.c&&isChecked(it.c)?'✓':'')+'</span><span class="ml">'+t(it.l)+'</span>'+
+      (it.k?'<span class="mk">'+it.k+'</span>':'')+'</div>';
+  }).join('');
+}
+
+function openMenuAt(i){
+  const el=document.getElementById('menubar');
+  el.querySelectorAll('.menu').forEach(m=>m.remove());
+  const titles=el.querySelectorAll('.mtitle');
+  titles.forEach((tn,k)=>tn.classList.toggle('open',k===i));
+  openIdx=i;
+  if(i===null)return;
+  const spec=MENU_SPECS[i];
+  let items=spec.items.map(it=>{
+    if(it==='-'||it.sub)return it;
+    if(it.proj&&STATE.scope==='portfolio')return Object.assign({},it,{dis:true});
+    return it;
+  });
+  if(spec.dynamic==='goto'){
+    const sub=[{l:'file.allProjects',a:'scope:portfolio'}];
+    keys().forEach(k=>{
+      const q=PROJECTS[k];
+      sub.push({l:'__name:'+q.name+(q.blk?t('file.blockedSuffix',{n:q.blk}):''),a:'scope:'+k});
+    });
+    items=items.concat(['-',{l:'file.goto',sub:sub}]);
+  }
+  const box=document.createElement('div');
+  box.className='menu on';
+  box.style.left=titles[i].offsetLeft+'px';
+  box.innerHTML=buildMenu(items).replace(/__name:([^<]*)/g,'$1');
+  box.querySelectorAll('.mitem[data-a]').forEach(it=>{
+    it.onclick=e=>{e.stopPropagation();const a=it.dataset.a;closeMenu();if(a)runAction(a);};
+  });
+  box.querySelectorAll('.mitem.has-sub').forEach(it=>it.onclick=e=>e.stopPropagation());
+  el.appendChild(box);
+}
+function closeMenu(){openMenuAt(null);}
+
+function runAction(a){
+  if(a.indexOf('view:')===0){STATE.scope='project';STATE.view=a.slice(5);STATE.sw=false;renderAll();return;}
+  if(a.indexOf('pview:')===0){STATE.scope='portfolio';STATE.pview=a.slice(6);STATE.sw=false;renderAll();return;}
+  if(a.indexOf('lang:')===0){
+    I18N.setLocale(a.slice(5));renderAll();
+    toast(t('toast.locale',{label:I18N.meta().label}));return;
+  }
+  if(a.indexOf('scope:')===0){
+    const s=a.slice(6);
+    if(s==='portfolio')STATE.scope='portfolio';
+    else{STATE.scope='project';STATE.project=s;}
+    STATE.stage=1;STATE.gate=null;STATE.sw=false;
+    renderAll();
+    toast(s==='portfolio'?t('toast.scopePortfolio'):t('toast.scopeProject',{name:PROJECTS[s].name}));
+    return;
+  }
+  const p=P();
+  switch(a){
+    case 'toggleSidebar':document.getElementById('sidebar').classList.toggle('collapsed');renderStatusbar();break;
+    case 'toggleInspector':document.getElementById('inspector').classList.toggle('collapsed');break;
+    case 'toggleAfk':STATE.afk=!STATE.afk;renderAll();
+      toast(STATE.afk?t('toast.afkOn'):t('toast.afkOff'));return;
+    case 'insertGate':openModal();return;
+    case 'approveAll':{
+      const n=p.gates.filter(g=>g.block).length;
+      p.gates.forEach(g=>{g.block=false;});
+      p.blk=0;renderAll();
+      toast(n?t('toast.approveAll',{n:n,project:p.name}):t('toast.approveNone'));
+      return;}
+    case 'advance':toast(t('toast.advance'));break;
+    case 'rerun':toast(t('toast.rerun'));break;
+    case 'pauseAll':toast(t('toast.pauseAll'));break;
+    case 'rescan':toast(t('toast.rescan'));break;
+    case 'copyDossier':toast(t('toast.copyDossier'));break;
+    case 'exportAudit':toast(t('toast.exportAudit'));break;
+    case 'newProject':openWizard();return;
+    case 'openWs':toast(t('toast.openWs'));break;
+    case 'importRepo':toast(t('toast.importRepo'));break;
+    case 'settings':openSettings();return;
+    case 'gateDefaults':openSettings('automation');return;
+    case 'assignRoles':openSettings('agents');return;
+    case 'helpFlow':toast(t('about.flow'));break;
+    case 'helpSkills':openSettings('skills');return;
+    case 'about':toast(t('about.body'));break;
+    default:toast(a.indexOf('preset:')===0?t('preset.'+a.slice(7)):'('+a+')');
+  }
+}
+
+function renderMenubar(){
+  const el=document.getElementById('menubar');
+  const d=new Date();
+  const wd=new Intl.DateTimeFormat(I18N.meta().intl,{weekday:'short'}).format(d);
+  const hm=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+  const all=Object.values(PROJECTS);
+  const blk=all.reduce((n,q)=>n+q.blk,0);
+  const run=all.reduce((n,q)=>n+q.running,0);
+  const anyBad=all.some(q=>ciOf(q).lv!=='ok');
+  el.innerHTML='<span class="mb-app">'+t('app.name')+'</span>'+
+    MENU_SPECS.map((m,i)=>'<span class="mtitle" data-i="'+i+'">'+t(m.title)+'</span>').join('')+
+    '<span class="extras">'+
+      '<span class="x">'+svg(ICON.bolt)+(run?t('extras.agents',{n:run}):t('extras.noAgents'))+'</span>'+
+      '<span class="x">'+svg(ICON.check)+(anyBad?t('extras.ciBad'):t('extras.ciOk'))+'</span>'+
+      '<span class="x">'+svg(ICON.gate)+t('extras.pending',{n:blk})+'</span>'+
+      '<span class="x" id="mbClock" title="'+I18N.meta().label+'">'+wd+' '+hm+'</span>'+
+      '<span class="langchip" id="langChip">'+I18N.meta().short+'</span>'+
+    '</span>';
+  el.querySelectorAll('.mtitle').forEach(tn=>{
+    tn.onclick=e=>{e.stopPropagation();openMenuAt(openIdx===+tn.dataset.i?null:+tn.dataset.i);};
+    tn.onmouseenter=()=>{if(openIdx!==null&&openIdx!==+tn.dataset.i)openMenuAt(+tn.dataset.i);};
+  });
+  const chip=document.getElementById('langChip');
+  if(chip)chip.onclick=e=>{
+    e.stopPropagation();
+    I18N.next();renderAll();
+    toast(t('toast.locale',{label:I18N.meta().label}));
+  };
+  if(openIdx!==null)openMenuAt(openIdx);
+}
+
+function renderToolbar(){
+  document.getElementById('searchLabel').textContent=t('toolbar.search');
+  document.getElementById('sbToggle').title=t('toolbar.collapseSidebar');
+  document.getElementById('inspToggle').title=t('toolbar.collapseInspector');
+  const el=document.getElementById('crumbs');
+  const all=Object.values(PROJECTS);
+  const blk=all.reduce((n,q)=>n+q.blk,0);
+  const run=all.reduce((n,q)=>n+q.running,0);
+  const caret='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.4 8 10.4 12 6.4"/></svg>';
+  const back='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.6 4 5.6 8l4 4"/></svg>';
+  if(STATE.scope==='portfolio'){
+    el.innerHTML='<span class="crumb-btn" id="crumbSwitch" title="'+t('toolbar.switchProject')+'">'+
+      t('crumb.all')+caret+'</span>'+
+      '<span class="crumb-sub">'+t('crumb.projects',{n:keys().length})+' · '+t('crumb.agents',{n:run})+
+      (blk?' · <b style="color:var(--red-d);font-weight:600">'+t('crumb.blocked',{n:blk})+'</b>':'')+'</span>';
+  }else{
+    const p=P();
+    el.innerHTML='<span class="crumb-to" id="crumbBack" title="'+t('crumb.back')+'">'+back+t('crumb.all')+'</span>'+
+      '<span class="crumb-sep">›</span>'+
+      '<span class="crumb-last" id="crumbSwitch" title="'+t('toolbar.switchProject')+'"><span>'+p.name+'</span>'+caret+'</span>'+
+      '<span class="crumb-sub">'+t('crumb.mode',{mode:L(p.mode),n:p.pipeline.findIndex(x=>x.s==='active'||x.s==='blocked')+1,total:9,name:stageSlot(p)})+'</span>';
+  }
+  const swEl=document.getElementById('crumbSwitch');
+  if(swEl)swEl.onclick=e=>{e.stopPropagation();STATE.sw=!STATE.sw;renderSwitcher();};
+  const bkEl=document.getElementById('crumbBack');
+  if(bkEl)bkEl.onclick=e=>{e.stopPropagation();runAction('scope:portfolio');};
+  renderSwitcher();
+}
+
+function stageSlot(p){
+  for(let i=0;i<p.pipeline.length;i++)if(p.pipeline[i].s==='active'||p.pipeline[i].s==='blocked')
+    return stageName(p.pipeline[i].n);
+  return stageName('s9');
+}
+
+function renderSwitcher(){
+  const el=document.getElementById('projsw');
+  if(!el)return;
+  el.classList.toggle('on',!!STATE.sw);
+  if(!STATE.sw){el.innerHTML='';return;}
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  let h='<div class="switem'+(STATE.scope==='portfolio'?' on':'')+'" data-s="portfolio">'+
+    '<span class="chk">'+(STATE.scope==='portfolio'?'✓':'')+'</span>'+
+    '<span class="dot '+(blk?'blk':'ok')+'"></span><span class="sw-nm">'+t('sw.all')+'</span>'+
+    '<span class="sw-mt">'+t('sw.summary',{n:keys().length,blocked:blk})+'</span></div>'+
+    '<div class="msep"></div>';
+  h+=keys().map(k=>{const q=PROJECTS[k];
+    return '<div class="switem'+(STATE.scope==='project'&&STATE.project===k?' on':'')+'" data-s="'+k+'">'+
+      '<span class="chk">'+(STATE.scope==='project'&&STATE.project===k?'✓':'')+'</span>'+
+      '<span class="dot '+q.dot+'"></span><span class="sw-nm">'+q.name+'</span>'+
+      '<span class="sw-mt">'+stageNo(q)+'/'+q.pipeline.length+'</span></div>';}).join('');
+  el.innerHTML=h;
+  el.querySelectorAll('.switem').forEach(it=>it.onclick=e=>{
+    e.stopPropagation();runAction('scope:'+it.dataset.s);});
+}
+
+function stageNo(q){
+  for(let i=0;i<q.pipeline.length;i++)
+    if(q.pipeline[i].s==='active'||q.pipeline[i].s==='blocked')return i+1;
+  return q.pipeline.length;
+}
+
+function renderSidebar(){
+  const portfolio=STATE.scope==='portfolio';
+  const all=Object.values(PROJECTS);
+  const blk=all.reduce((n,q)=>n+q.blk,0);
+  const run=all.reduce((n,q)=>n+q.running,0);
+  let h='<div class="sb-scroll">';
+  h+='<div class="pitem'+(portfolio?' on':'')+'" data-s="portfolio" style="margin-bottom:6px">'+
+     '<span class="dot '+(blk?'blk':'ok')+'"></span><span class="nm">'+t('sb.all')+'</span>'+
+     (blk?'<span class="cnt">'+blk+'</span>':'')+'</div>';
+  h+='<div class="sec">'+t('sb.projects')+'</div>';
+  h+=keys().map(k=>{const q=PROJECTS[k];
+    return '<div class="pitem'+(!portfolio&&k===STATE.project?' on':'')+'" data-s="'+k+'">'+
+      '<span class="dot '+q.dot+'"></span><span class="nm">'+q.name+'</span>'+
+      (q.blk?'<span class="cnt">'+q.blk+'</span>':'')+'</div>';}).join('');
+  h+='<div class="sec">'+(portfolio?t('sb.portfolio'):t('sb.current'))+'</div><div class="meta">';
+  if(portfolio){
+    h+='<div>'+t('sb.summaryPortfolio',{p:keys().length,run:run,blocked:blk})+'</div>'+
+       '<div>'+t('sb.summaryPortfolio2',{
+         active:all.filter(q=>q.blk>0||q.running>0).length,
+         done:all.filter(q=>stageNo(q)===q.pipeline.length&&!q.blk).length})+'</div>';
+  }else{
+    const p=P();
+    h+='<div>'+t('sb.stage',{n:stageNo(p),total:p.pipeline.length,name:stageSlot(p)})+'</div>'+
+       '<div>'+(p.running?t('sb.agentsRunning',{n:p.running}):t('sb.noAgents'))+'</div>'+
+       '<div class="mono">'+p.branch+'</div>';
+  }
+  h+='</div>';
+  const cta=portfolio
+    ? '<button class="btn btn-p" style="width:100%" onclick="openWizard()">'+t('sb.newProject')+'</button>'+
+      '<button class="btn" style="width:100%;margin-top:7px" onclick="openModal()">'+t('sb.insertGate')+'</button>'
+    : '<button class="btn btn-p" style="width:100%" onclick="openModal()">'+t('sb.insertGate')+'</button>'+
+      '<button class="btn" style="width:100%;margin-top:7px" onclick="openWizard()">'+t('sb.newProject')+'</button>';
+  h+='<div style="padding:12px 2px 4px">'+cta+'</div>';
+  h+='</div>';
+  const el=document.getElementById('sidebar');
+  el.innerHTML=h;
+  el.querySelectorAll('.pitem').forEach(e=>e.onclick=()=>runAction('scope:'+e.dataset.s));
+}
+
+function renderSeg(){
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  const portfolio=STATE.scope==='portfolio';
+  const items=portfolio
+    ? [['overview','seg.overview'],['timeline','seg.roadmap'],['activity','seg.activity']]
+    : [['pipeline','seg.pipeline'],['board','seg.board'],['inbox','seg.inbox'],
+       ['releases','seg.releases'],['records','seg.records']];
+  const cur=portfolio?STATE.pview:STATE.view;
+  const pre=portfolio?'pview:':'view:';
+  const el=document.getElementById('seg');
+  el.innerHTML=items.map(it=>'<button class="segbtn'+(cur===it[0]?' on':'')+'" data-v="'+it[0]+'">'+
+    t(it[1])+(it[0]==='inbox'&&blk?'<span class="segdot"></span>':'')+'</button>').join('');
+  el.querySelectorAll('.segbtn').forEach(b=>b.onclick=()=>runAction(pre+b.dataset.v));
+  document.getElementById('bigTitle').textContent=t(portfolio?PVIEWNAME[STATE.pview]:VIEWNAME[STATE.view]);
+}
+
+function renderStatusbar(){
+  const all=Object.values(PROJECTS);
+  const blk=all.reduce((n,q)=>n+q.blk,0);
+  const run=all.reduce((n,q)=>n+q.running,0);
+  const cap=SETTINGS.agents.maxParallel;
+  document.getElementById('statusbar').innerHTML=
+    '<span>'+t('status.projects',{n:keys().length})+'</span>'+
+    '<span>'+t('status.agents',{n:run})+' / '+cap+'</span>'+
+    '<span>'+t('status.blocked',{n:blk})+'</span>'+
+    (STATE.afk?'<span class="pill p-blue">'+t('status.afk')+'</span>':'')+
+    '<span class="sp"></span>'+
+    (SETTINGS.general.cost?'<span>'+t('status.tokens',{amount:'¥46.20'})+'</span>':'')+
+    '<span>'+(all.some(q=>ciOf(q).lv!=='ok')?t('extras.ciBad'):t('extras.ciOk'))+'</span>'+
+    '<span>'+t('status.daemon')+'</span>';
+}
+
+function renderMain(){
+  const m=document.getElementById('main');
+  if(STATE.scope==='portfolio'){
+    m.innerHTML=STATE.pview==='overview'?pOverview()
+      :STATE.pview==='timeline'?pTimeline():pActivity();
+  }else{
+    const p=P();
+    m.innerHTML=STATE.view==='pipeline'?viewPipeline(p)
+      :STATE.view==='board'?viewBoard(p)
+      :STATE.view==='inbox'?viewInbox()
+      :STATE.view==='releases'?viewReleases(p):viewRecords(p);
+  }
+  bindMain();
+}
+
+function pOverview(){
+  const all=Object.values(PROJECTS);
+  const blk=all.reduce((n,q)=>n+q.blk,0);
+  const run=all.reduce((n,q)=>n+q.running,0);
+  const ciBad=all.filter(q=>ciOf(q).lv!=='ok').length;
+  const done=all.filter(q=>stageNo(q)===q.pipeline.length&&!q.blk).length;
+  const stalled=all.filter(q=>q.blk>0).length;
+  const tile=(l,v,u,n)=>'<div class="tile"><div class="tl">'+l+'</div><div class="tv">'+v+
+    (u?'<span class="tu">'+u+'</span>':'')+'</div>'+(n?'<div class="tn">'+n+'</div>':'')+'</div>';
+  let h='<div class="tiles">'+
+    tile(t('pf.total'),keys().length,t('pf.totalUnit'),
+      t('pf.totalNote',{done:done,stalled:stalled}))+
+    tile(t('pf.running'),run,t('pf.totalUnit'),
+      run?t('pf.runningNote'):t('pf.runningNoteNone'))+
+    tile(t('pf.blocked'),blk,t('pf.totalUnit'),
+      blk?t('pf.blockedNote'):t('pf.blockedNoteNone'))+
+    tile(t('pf.ci'),(keys().length-ciBad)+'/'+keys().length,'',
+      ciBad?t('pf.ciNoteBad',{n:ciBad}):t('pf.ciNoteOk'))+
+  '</div>';
+
+  h+='<div class="card"><h3>'+t('pf.tracking')+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">'+
+    t('pf.clickRow')+'</span></h3><div class="bd" style="padding:0"><table class="ptbl"><thead><tr>'+
+    '<th>'+t('tbl.project')+'</th><th>'+t('tbl.progress')+'</th><th>'+t('tbl.stage')+'</th>'+
+    '<th>'+t('tbl.blocked')+'</th><th>'+t('tbl.agent')+'</th><th>'+t('tbl.ci')+'</th>'+
+    '<th>'+t('tbl.activity')+'</th></tr></thead><tbody>';
+  keys().forEach(k=>{const q=PROJECTS[k],ci=ciOf(q);
+    h+='<tr data-s="'+k+'">'+
+      '<td><div class="pnm"><span class="dot '+q.dot+'"></span><div class="txt">'+
+        '<div class="n1">'+q.name+'</div><div class="n2">'+q.branch+'</div></div></div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:9px"><span class="mini">'+
+        q.pipeline.map(s=>'<i class="'+s.s+'"></i>').join('')+'</span>'+
+        '<span class="tnum">'+stageNo(q)+'/'+q.pipeline.length+'</span></div></td>'+
+      '<td><span class="pill '+(q.dot==='blk'?'p-red':q.dot==='run'?'p-blue':'p-green')+'">'+
+        stageSlot(q)+'</span></td>'+
+      '<td>'+(q.blk?'<span class="pill p-red">'+q.blk+'</span>':'<span class="tnum" style="color:var(--label-3)">—</span>')+'</td>'+
+      '<td class="tnum">'+(q.running?q.running:'<span style="color:var(--label-3)">—</span>')+'</td>'+
+      '<td><div style="display:flex;align-items:center;gap:7px"><span class="sdot '+ci.lv+'"></span>'+
+        '<div><div class="tnum">'+ci.id+'</div>'+
+        '<div style="font-size:10.5px;color:var(--label-3);white-space:nowrap">'+L(ci.res)+'</div></div></div></td>'+
+      '<td><div class="tnum">'+q.updated+'</div>'+
+        '<div style="font-size:11px;color:var(--label-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px">'+
+        L(q.note)+'</div></td>'+
+    '</tr>';});
+  h+='</tbody></table></div></div>';
+
+  h+='<div class="card"><h3>'+t('pf.pending')+
+    (blk?'<span class="pill p-red" style="margin-left:9px">'+blk+'</span>':'')+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">'+
+    t('pf.pendingScope')+'</span></h3><div class="bd">';
+  let any=false;
+  keys().forEach(k=>{const q=PROJECTS[k];
+    q.gates.forEach(g=>{any=true;
+      h+='<div class="gate'+(g.block?'':' done-gate')+'" style="cursor:pointer" data-s="'+k+'">'+
+        '<div class="gh"><span class="gicon" style="'+tint(g.lv)+'">'+svg(ICON[g.icon]||ICON.gate)+'</span>'+
+        '<span class="nm">'+L(g.title)+'</span>'+
+        '<span class="pill '+(g.block?'p-red':'p-gray')+'">'+
+        (g.block?t('gate.blocking'):t('gate.nonBlocking'))+'</span></div>'+
+        '<div class="gmeta"><span class="pill p-gray">'+q.name+'</span>'+
+        '<span class="pill p-gray">'+L(g.scope)+'</span>'+
+        '<span class="pill p-blue">'+t('gate.ownerIs',{name:roleName(g.owner)})+'</span></div>'+
+      '</div>';});});
+  if(!any)h+='<div class="empty">'+t('inbox.empty')+'</div>';
+  h+='</div></div>';
+  return h;
+}
+
+function pTimeline(){
+  let h='<div class="card"><h3>'+t('tl.title')+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">'+
+    t('tl.subtitle')+'</span></h3><div class="bd"><div class="tl"><div class="tl-inner">'+
+    '<div class="tlhead"><div></div><div class="tltrack">'+
+      STAGE_KEYS.map((k,i)=>{
+        const gated=keys().some(pk=>PROJECTS[pk].pipeline[i].g);
+        return '<div class="hcell">'+t('stageshort.'+k)+
+          (gated?'<span style="color:var(--orange)"> ◆</span>':'')+'</div>';}).join('')+
+    '</div></div>';
+  keys().forEach(k=>{const q=PROJECTS[k];
+    h+='<div class="tlrow" data-s="'+k+'">'+
+      '<div class="tlname"><span class="dot '+q.dot+'"></span><span>'+q.name+'</span></div>'+
+      '<div class="tltrack">'+q.pipeline.map((s,i)=>
+        '<i class="'+s.s+'" title="'+stageName(s.n)+' · '+L(s.sk)+'"></i>').join('')+'</div>'+
+    '</div>';});
+  h+='</div></div><div class="tllegend">'+
+    '<span><i style="background:var(--green-t);border:.5px solid rgba(52,199,89,.5)"></i>'+t('tl.done')+'</span>'+
+    '<span><i style="background:var(--blue)"></i>'+t('tl.active')+'</span>'+
+    '<span><i style="background:var(--red-t);border:.5px solid rgba(255,59,48,.5)"></i>'+t('tl.blocked')+'</span>'+
+    '<span><i style="background:rgba(120,120,128,.12)"></i>'+t('tl.todo')+'</span>'+
+    '<span style="margin-left:auto">'+t('tl.gateNote')+'</span>'+
+    '</div></div></div>';
+  return h;
+}
+
+function pActivity(){
+  const rows=[];
+  keys().forEach(k=>{const q=PROJECTS[k];
+    q.ci.log.forEach(l=>rows.push({t:l[0],proj:q.name,dot:q.dot,text:L(l[1])}));});
+  rows.sort((a,b)=>a.t<b.t?1:a.t>b.t?-1:0);
+  let h='<div class="card"><h3>'+t('act.title')+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">'+
+    t('act.subtitle')+'</span></h3><div class="bd"><div class="feed">'+
+    rows.map(r=>'<div class="frow"><span class="ftime">'+r.t+'</span>'+
+      '<span class="fdot" style="background:'+dotColor(r.dot)+'"></span>'+
+      '<div class="fbody">'+r.text+'<div class="fproj">'+r.proj+'</div></div></div>').join('')+
+    '</div></div></div>';
+  h+='<div class="card"><h3>'+t('act.byProject')+'</h3><div class="bd"><table class="ptbl"><thead><tr>'+
+    '<th>'+t('tbl.project')+'</th><th>'+t('tbl.stage')+'</th><th>'+t('tbl.done')+'</th>'+
+    '<th>'+t('tbl.blocked')+'</th><th>'+t('tbl.commits')+'</th><th>'+t('tbl.updated')+'</th>'+
+    '</tr></thead><tbody>';
+  keys().forEach(k=>{const q=PROJECTS[k];
+    const dn=q.pipeline.filter(s=>s.s==='done').length;
+    h+='<tr data-s="'+k+'"><td><div class="pnm"><span class="dot '+q.dot+'"></span>'+
+      '<div class="txt"><div class="n1">'+q.name+'</div></div></div></td>'+
+      '<td class="tnum">'+stageNo(q)+'/'+q.pipeline.length+'</td>'+
+      '<td class="tnum">'+dn+'</td>'+
+      '<td class="tnum">'+(q.blk||'—')+'</td>'+
+      '<td class="tnum">'+(q.commits||'—')+'</td>'+
+      '<td class="tnum">'+q.updated+'</td></tr>';});
+  h+='</tbody></table></div></div>';
+  return h;
+}
+
+function viewPipeline(p){
+  const rail=p.pipeline.map((s,i)=>
+    '<div class="stage '+s.s+(STATE.stage===i+1?' on':'')+'" data-i="'+(i+1)+'">'+
+    '<span class="idx">'+(i+1)+'</span><div style="min-width:0"><div class="nm">'+stageName(s.n)+
+    (s.g?'<span class="gf">◆</span>':'')+'</div><div class="sk">'+L(s.sk)+'</div></div></div>').join('');
+  const r=p.records[STATE.stage];
+  const dossier=r?dossierHTML(r):'<div class="card"><div class="empty">'+t('pipe.empty')+'</div></div>';
+  return '<div class="split"><div class="card"><h3>'+t('pipe.title')+'</h3><div class="bd rail">'+rail+'</div></div>'+
+    '<div>'+dossier+'</div></div>';
+}
+
+function dossierHTML(r){
+  const row=(label,color,icon,val)=>
+    '<div class="drow"><span class="ibadge" style="'+color+'">'+svg(ICON[icon])+'</span>'+
+    '<div style="min-width:0;flex:1"><div class="dl">'+label+'</div><div class="dv">'+val+'</div></div></div>';
+  const v=r.verdict;
+  const pill=r.status==='done'?'p-green':r.status==='pending'?'p-orange':r.status==='running'?'p-blue':'p-gray';
+  const runTxt=typeof r.run==='string'?r.run:L(r.run);
+  return '<div class="card"><h3>'+
+      '<div class="dhead" style="flex:1"><span class="nm">'+t('pipe.dossier')+' · '+stageName(r.stage)+'</span></div>'+
+      '<span class="pill '+pill+'">'+statusText(r.status)+'</span></h3><div class="bd">'+
+    '<div style="font-size:11.5px;color:var(--label-3);margin-bottom:14px">'+
+      '<span style="font-family:var(--mono)">'+L(r.skill)+'</span> · '+runTxt+
+      (r.by?' · '+t('dossier.trigger',{who:L(r.by)}):'')+'</div>'+
+    row(t('dossier.inputs'),tint('info'),'input',L(r.inputs))+
+    row(t('dossier.actions'),tint('ok'),'action',L(r.actions))+
+    row(t('dossier.artifacts'),tint('warn'),'artifact',L(r.artifacts))+
+    row(t('dossier.gates'),tint('info'),'gate',L(r.gates))+
+    row(t('dossier.verdict'),'background:var(--purple-t);color:var(--purple-d)','check',
+      t('dossier.by')+' <b>'+roleName(v.by)+'</b> · '+t('dossier.method')+' <b>'+methodList(v.method,true)+'</b>'+
+      ' · '+t('dossier.evidence')+' <b>'+(v.evidence?L(v.evidence):'—')+'</b>'+
+      ' · '+t('dossier.at')+' <b>'+(v.at||'—')+'</b>'+
+      ' · '+t('dossier.result')+' <b>'+statusText(v.result)+'</b>')+
+    '</div></div>';
+}
+
+function viewBoard(p){
+  if(!p.tickets.length)return '<div class="card"><div class="empty">'+t('board.empty')+'</div></div>';
+  const cols={};
+  p.tickets.forEach(tk=>{(cols[tk.col]=cols[tk.col]||[]).push(tk);});
+  const body=Object.keys(cols).sort((a,b)=>a-b).map(c=>
+    '<div class="col"><div class="colhead">'+t('board.layerN',{n:c})+'</div>'+cols[c].map(tk=>
+      '<div class="tcard '+tk.s+'"><div class="th"><span class="tid">'+tk.id+'</span>'+
+      '<span class="pill '+CHIP[tk.s][0]+'">'+t('board.'+CHIP[tk.s][1])+'</span></div>'+
+      '<div class="ttl">'+L(tk.t)+(tk.flag?' <span class="gf">◆</span>':'')+'</div>'+
+      '<div class="segs">'+[0,1,2,3].map(i=>'<i class="'+(i<tk.seg?'on':'')+'"></i>').join('')+'</div>'+
+      '<div class="dep">'+L(tk.d)+'</div></div>').join('')+'</div>').join('');
+  return '<div class="card"><h3>'+t('board.title')+' <span class="pill p-teal">'+t('board.throughFour')+'</span>'+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">'+
+    t('board.layers')+'</span></h3>'+
+    '<div class="bd"><div class="legend">'+
+      '<span><i style="background:var(--green)"></i>'+t('board.done')+'</span>'+
+      '<span><i style="background:var(--blue)"></i>'+t('board.active')+'</span>'+
+      '<span><i style="background:var(--orange)"></i>'+t('board.frontier')+'</span>'+
+      '<span><i style="background:#c7c7cc"></i>'+t('board.blocked')+'</span></div>'+
+    '<div class="board">'+body+'</div></div></div>';
+}
+
+function viewInbox(){
+  const total=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  let h='<div class="card"><h3>'+t('inbox.title')+' <span class="pill p-red">'+total+'</span>'+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">'+
+    t('inbox.scope')+'</span></h3><div class="bd">';
+  let any=false;
+  keys().forEach(k=>{
+    const q=PROJECTS[k];
+    if(!q.gates.length)return;
+    any=true;
+    h+='<div class="sec" style="padding:14px 2px 8px">'+q.name+'</div>';
+    q.gates.forEach(g=>{
+      h+='<div class="gate'+(STATE.gate===k+'/'+g.id?' on':'')+'" data-g="'+k+'/'+g.id+'">'+
+        '<div class="gh"><span class="gicon" style="'+tint(g.lv)+'">'+svg(ICON[g.icon]||ICON.gate)+'</span>'+
+        '<span class="nm">'+L(g.title)+'</span>'+
+        '<span class="pill '+(g.block?'p-red':'p-gray')+'">'+
+        (g.block?t('gate.blocking'):t('gate.nonBlocking'))+'</span></div>'+
+        '<div class="gb">'+L(g.body)+'</div>'+
+        '<div class="gmeta"><span class="pill p-gray">'+L(g.scope)+'</span>'+
+        '<span class="pill p-gray">'+gateTrigger(g)+'</span>'+
+        '<span class="pill p-blue">'+t('gate.ownerIs',{name:roleName(g.owner)})+'</span>'+
+        g.methods.map(m=>'<span class="pill p-teal">'+t('m.'+m+'Short')+'</span>').join('')+'</div>'+
+        '<div class="gbtns">'+g.btns.map((b,i)=>'<button class="btn'+(i===0?' btn-p':'')+'" data-msg="'+
+          encodeURIComponent(btnMsg(b))+'">'+btnLabel(b)+'</button>').join('')+'</div>'+
+      '</div>';
+    });
+  });
+  if(!any)h+='<div class="empty">'+t('inbox.empty')+'</div>';
+  return h+'</div></div>';
+}
+
+function viewReleases(p){
+  const rows=a=>a.map(r=>'<div class="kv"><span class="sdot '+r[0]+'"></span><span class="k">'+r[1]+
+    '</span><span class="v">'+L(r[2])+'</span></div>').join('');
+  return '<div class="card"><h3>'+t('rel.pipeline')+'</h3><div class="bd">'+rows(p.ci.pipe)+'</div></div>'+
+    '<div class="card"><h3>'+t('rel.servers')+'</h3><div class="bd">'+rows(p.ci.servers)+'</div></div>'+
+    '<div class="card"><h3>'+t('rel.releases')+'</h3><div class="bd">'+rows(p.ci.releases)+'</div></div>'+
+    '<div class="card"><h3>'+t('rel.events')+'</h3><div class="bd"><div class="log">'+
+      p.ci.log.map(l=>'<div><b>'+l[0]+'</b>'+L(l[1])+'</div>').join('')+'</div></div></div>';
+}
+
+function viewRecords(p){
+  const ks=Object.keys(p.records);
+  if(!ks.length)return '<div class="card"><div class="empty">'+t('rec.empty')+'</div></div>';
+  const rows=ks.map(i=>{const r=p.records[i];
+    const st=r.status==='done'?'p-green':r.status==='running'?'p-blue':'p-orange';
+    const runTxt=typeof r.run==='string'?r.run:L(r.run);
+    return '<tr><td>'+i+' · '+stageName(r.stage)+'</td><td class="mono">'+L(r.skill)+'</td><td>'+runTxt+'</td>'+
+      '<td>'+(r.by?L(r.by):'—')+'</td><td>'+roleName(r.verdict.by)+'</td><td>'+methodList(r.verdict.method,true)+'</td>'+
+      '<td><span class="pill '+st+'">'+statusText(r.status)+'</span></td></tr>';}).join('');
+  return '<div class="card"><h3>'+t('rec.title')+'</h3><div class="bd" style="padding:0">'+
+    '<table class="audit"><thead><tr><th>'+t('st.phase')+'</th><th>skill</th><th>'+t('tbl.interval')+'</th>'+
+    '<th>'+t('tbl.trigger')+'</th><th>'+t('tbl.owner')+'</th><th>'+t('tbl.method')+'</th>'+
+    '<th>'+t('tbl.status')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+    '<div class="card"><h3>'+t('rec.auditTitle')+'</h3><div class="bd" style="font-size:12.5px;color:var(--label-2);line-height:1.75">'+
+    t('rec.auditBody')+'</div></div>';
+}
+
+function renderInspector(){
+  const el=document.getElementById('inspector');
+  if(STATE.scope==='portfolio'){el.innerHTML=globalInspector();bindInspector();return;}
+  const p=P();
+  let g=null;
+  if(STATE.gate){const s=STATE.gate.split('/');g=PROJECTS[s[0]].gates.find(x=>x.id===s[1]);}
+  if(!g&&p.gates.length)g=p.gates[0];
+  let h='<div class="ihead"><h2>'+t('ins.gate')+'</h2>'+
+    '<button class="btn btn-p" onclick="openModal()">'+t('ins.insert')+'</button></div>';
+  if(!g){el.innerHTML=h+'<div class="card"><div class="empty">'+t('ins.noGates')+'</div></div>';return;}
+  h+='<div class="card"><h3><span class="gicon" style="'+tint(g.lv)+';width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center">'+
+    svg(ICON[g.icon]||ICON.gate)+'</span>'+L(g.title)+'</h3><div class="bd">'+
+    '<div style="font-size:11.5px;color:var(--label-3);line-height:1.85;margin-bottom:15px">'+
+    t('ins.scopeLabel')+': '+L(g.scope)+'<br>'+t('ins.triggerLabel')+': '+gateTrigger(g)+'</div>'+
+    '<div class="field"><label>'+t('ins.owner')+'</label><select>'+
+      ROLE_KEYS.map(o=>'<option'+(o===g.owner?' selected':'')+'>'+t('role.'+o)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>'+t('ins.methods')+'</label><div class="checks">'+
+      METHOD_KEYS.map(m=>'<label><input type="checkbox"'+(g.methods.indexOf(m)>=0?' checked':'')+'>'+
+        t('m.'+m+'Short')+'</label>').join('')+
+    '</div></div>'+
+    '<div class="field"><label>'+t('ins.onFail')+'</label><select>'+
+      FAIL_KEYS.map((o,i)=>'<option'+(i===0?' selected':'')+'>'+t('fail.'+o)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>'+t('ins.blockLabel')+'</label><label class="sw"><input type="checkbox"'+
+      (g.block?' checked':'')+'><i></i><span style="font-size:12.5px">'+t('ins.blockThen')+'</span></label></div>'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+    '<button class="btn btn-p" style="flex:1" onclick="toast(\''+t('ins.save')+'\')">'+t('ins.save')+'</button>'+
+    '<button class="btn" style="flex:1" onclick="toast(\''+t('toast.handled')+'\')">'+t('ins.rework')+'</button>'+
+    '</div></div></div>';
+  h+='<div class="card"><h3>'+t('ins.howRuns')+'</h3><div class="bd" style="font-size:12.5px;color:var(--label-2);line-height:1.75">'+
+    t('ins.howRunsBody',{owner:'<b style="color:var(--label)">'+roleName(g.owner)+'</b>'})+'</div></div>';
+  el.innerHTML=h;
+}
+
+function globalInspector(){
+  const all=Object.values(PROJECTS);
+  const blk=all.reduce((n,q)=>n+q.blk,0);
+  let h='<div class="ihead"><h2>'+t('ins.global')+'</h2>'+
+    '<button class="btn btn-p" onclick="openModal()">'+t('ins.insert')+'</button></div>';
+
+  h+='<div class="card"><h3>'+t('ins.portfolioState')+'</h3><div class="bd">';
+  keys().forEach(k=>{const q=PROJECTS[k];
+    h+='<div class="kv" style="cursor:pointer" onclick="runAction(\'scope:'+k+'\')">'+
+      '<span class="dot '+q.dot+'"></span><span class="k">'+q.name+'</span>'+
+      '<span class="v">'+stageNo(q)+'/'+q.pipeline.length+(q.blk?' · '+q.blk:'')+'</span></div>';});
+  h+='</div></div>';
+
+  h+='<div class="card"><h3>'+t('ins.gateDefaults')+'</h3><div class="bd">'+
+    '<div class="field"><label>'+t('ins.defaultMethods')+'</label><div class="checks">'+
+      METHOD_KEYS.map((m,i)=>'<label><input type="checkbox"'+(i<2||i===5?' checked':'')+'>'+
+        t('m.'+m+'Short')+'</label>').join('')+
+    '</div><div class="hint">'+t('modal.ownerHint')+'</div></div>'+
+    '<div class="field"><label>'+t('ins.defaultFail')+'</label><select>'+
+      FAIL_KEYS.map((o,i)=>'<option'+(i===0?' selected':'')+'>'+t('fail.'+o)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>'+t('ins.blockBehavior')+'</label><label class="sw"><input type="checkbox" checked><i></i>'+
+    '<span style="font-size:12.5px">'+t('ins.blockThen')+'</span></label></div>'+
+    '<div style="margin-top:14px"><button class="btn btn-p" style="width:100%" onclick="toast(\''+
+      t('ins.saveDefaults')+'\')">'+t('ins.saveDefaults')+'</button></div>'+
+  '</div></div>';
+
+  h+='<div class="card"><h3>'+t('ins.roles')+'</h3><div class="bd">'+
+    '<div style="font-size:12px;color:var(--label-2);line-height:1.7;margin-bottom:13px">'+
+    t('ins.rolesBody',{n:keys().length})+'</div>';
+  ROLE_KEYS.slice(0,5).forEach((r,i)=>{
+    h+='<div class="field" style="margin-bottom:9px"><label>'+t('role.'+r)+'</label><select>'+
+      '<option>'+t('role.po')+'</option></select></div>';});
+  h+='<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="toast(\''+
+    t('toast.roles')+'\')">'+t('ins.manage')+'</button></div>'+
+  '</div></div>';
+
+  h+='<div class="card"><h3>'+t('ins.notify')+'</h3><div class="bd">'+
+    '<div class="field"><label>'+t('ins.when')+'</label><div class="checks">'+
+      '<label><input type="checkbox" checked>'+t('ins.notifyBlocker',{n:blk||0})+'</label>'+
+      '<label><input type="checkbox" checked>'+t('ins.notifyStage')+'</label>'+
+      '<label><input type="checkbox">'+t('ins.notifyCi')+'</label>'+
+      '<label><input type="checkbox">'+t('ins.notifyCrash')+'</label>'+
+      '<label><input type="checkbox">'+t('ins.notifyRelease')+'</label>'+
+    '</div></div>'+
+    '<div class="field"><label>'+t('ins.channels')+'</label><div class="checks">'+
+      '<label><input type="checkbox" checked>'+t('ins.chDesktop')+'</label>'+
+      '<label><input type="checkbox" checked>'+t('ins.chEmail')+'</label>'+
+      '<label><input type="checkbox">'+t('ins.chIm')+'</label>'+
+    '</div></div>'+
+  '</div></div>';
+  return h;
+}
+
+function bindInspector(){}
+function renderAll(){
+  document.documentElement.lang=I18N.meta().intl;
+  renderMenubar();renderToolbar();renderSidebar();renderSeg();renderMain();renderInspector();renderStatusbar();
+}
+
+function bindMain(){
+  document.querySelectorAll('.stage').forEach(s=>s.onclick=()=>{STATE.stage=+s.dataset.i;renderMain();});
+  document.querySelectorAll('#main .gate[data-g]').forEach(g=>g.onclick=e=>{
+    if(e.target.closest('.btn'))return;
+    STATE.gate=g.dataset.g;renderMain();renderInspector();});
+  document.querySelectorAll('#main .gate[data-s]').forEach(g=>g.onclick=e=>{
+    if(e.target.closest('.btn'))return;
+    const k=g.dataset.s;
+    STATE.scope='project';STATE.project=k;STATE.view='inbox';STATE.gate=null;
+    renderAll();toast(t('toast.enteredInbox',{project:PROJECTS[k].name}));});
+  document.querySelectorAll('#main tr[data-s]').forEach(r=>r.onclick=()=>runAction('scope:'+r.dataset.s));
+  document.querySelectorAll('#main .tlrow[data-s]').forEach(r=>r.onclick=()=>runAction('scope:'+r.dataset.s));
+  document.querySelectorAll('#main .gate .gbtns .btn').forEach(b=>b.onclick=()=>{
+    const card=b.closest('.gate');
+    card.classList.add('done-gate');
+    card.querySelectorAll('.btn').forEach(x=>x.disabled=true);
+    if(card.dataset.g){
+      const s=card.dataset.g.split('/');
+      const q=PROJECTS[s[0]],gate=q.gates.find(x=>x.id===s[1]);
+      if(gate&&gate.block)q.blk=Math.max(0,q.blk-1);
+    }
+    renderSidebar();renderSeg();renderStatusbar();
+    toast(decodeURIComponent(b.dataset.msg));
+  });
+}
+
+function localizeModal(){
+  document.getElementById('modalTitle').textContent=t('modal.title');
+  document.getElementById('mProjLabel').textContent=t('modal.project');
+  document.getElementById('mScopeLabel').textContent=t('modal.where');
+  document.getElementById('mNameLabel').textContent=t('modal.name');
+  document.getElementById('mName').placeholder=t('modal.namePh');
+  document.getElementById('mOwnerLabel').textContent=t('modal.owner');
+  document.getElementById('mOwnerHint').textContent=t('modal.ownerHint');
+  document.getElementById('mMethodsLabel').textContent=t('modal.methods');
+  document.getElementById('mFailLabel').textContent=t('modal.onFail');
+  document.getElementById('mBlockLabel').textContent=t('modal.block');
+  document.getElementById('mBlockText').textContent=t('modal.blockLabel');
+  document.getElementById('mNoteLabel').textContent=t('modal.note');
+  document.getElementById('mNote').placeholder=t('modal.notePh');
+  document.getElementById('mCancel').textContent=t('modal.cancel');
+  document.getElementById('mCreate').textContent=t('modal.create');
+  document.getElementById('mOwner').innerHTML=ROLE_KEYS.map(k=>'<option value="'+k+'">'+t('role.'+k)+'</option>').join('');
+  document.getElementById('mMethods').innerHTML=METHOD_KEYS.map((m,i)=>
+    '<label><input type="checkbox" value="'+m+'"'+((i===0)||(i===2)?' checked':'')+'>'+t('m.'+m)+'</label>').join('');
+  document.getElementById('mFail').innerHTML=FAIL_KEYS.map(k=>'<option value="'+k+'">'+t('fail.'+k)+'</option>').join('');
+}
+
+function openModal(){
+  localizeModal();
+  const portfolio=STATE.scope==='portfolio';
+  const p=P();
+  const pw=document.getElementById('mProjWrap'),pj=document.getElementById('mProj');
+  pw.style.display=portfolio?'':'none';
+  if(portfolio){
+    pj.innerHTML=keys().map(k=>'<option value="'+k+'"'+(k===STATE.project?' selected':'')+'>'+
+      PROJECTS[k].name+'</option>').join('');
+  }
+  document.getElementById('mScope').innerHTML=
+    p.pipeline.map((s,i)=>'<option value="'+(i+1)+'">'+(i+1)+' · '+stageName(s.n)+'</option>').join('')+
+    p.tickets.map(tk=>'<option value="'+tk.id+'">'+tk.id+' · '+L(tk.t)+'</option>').join('')+
+    '<option value="spec.md">spec.md</option>';
+  document.getElementById('overlay').classList.add('on');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('on');}
+
+function createGate(){
+  const target=(STATE.scope==='portfolio')?document.getElementById('mProj').value:STATE.project;
+  const p=PROJECTS[target];
+  const name=document.getElementById('mName').value.trim()||t('modal.title');
+  const rawScope=document.getElementById('mScope').value;
+  const scopeLabel=/^\d+$/.test(rawScope)?stageName('s'+rawScope):rawScope;
+  const owner=document.getElementById('mOwner').value;
+  const fail=document.getElementById('mFail').value;
+  const block=document.getElementById('mBlock').checked;
+  const methods=[].slice.call(document.querySelectorAll('#mMethods input:checked')).map(i=>i.value);
+  const note=document.getElementById('mNote').value.trim();
+  const id='x'+Date.now();
+  p.gates.unshift({id:id,lv:'warn',icon:'gate',
+    title:name,
+    scope:scopeLabel,
+    triggerKey:'gate.insertedByModal',
+    owner:owner,methods:methods.length?methods:['signoff'],block:block,
+    body:(note||t('ins.noGates'))+' — '+t('fail.'+fail),
+    btns:[
+      {labelKey:'gate.pass',msgKey:'gate.passMsg'},
+      {labelKey:'fail.'+fail,msgKey:'toast.handled'}
+    ]});
+  if(block)p.blk++;
+  STATE.scope='project';STATE.project=target;
+  STATE.gate=target+'/'+id;STATE.view='inbox';
+  closeModal();
+  document.getElementById('mName').value='';document.getElementById('mNote').value='';
+  renderAll();
+  toast(t('toast.gateCreated',{project:p.name,scope:scopeLabel,owner:roleName(owner)}));
+}
+
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();});
+document.addEventListener('click',()=>{
+  if(openIdx!==null)closeMenu();
+  if(STATE.sw){STATE.sw=false;renderSwitcher();}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(SETSTATE.open){closeSettings();return;}
+    if(WZSTATE.open){closeWizard();return;}
+    if(openIdx!==null){closeMenu();return;}
+    if(document.getElementById('overlay').classList.contains('on')){closeModal();return;}
+    if(STATE.sw){STATE.sw=false;renderSwitcher();}
+    return;
+  }
+  if(!(e.metaKey||e.ctrlKey))return;
+  const map={'0':'pview:overview','6':'pview:timeline','7':'pview:activity',
+    '1':'view:pipeline','2':'view:board','3':'view:inbox','4':'view:releases','5':'view:records',
+    'g':'insertGate','n':'newProject',',':'settings'};
+  const a=map[e.key];
+  if(a){e.preventDefault();runAction(a);}
+});
+document.getElementById('sbToggle').onclick=()=>{
+  document.getElementById('sidebar').classList.toggle('collapsed');renderStatusbar();};
+document.getElementById('inspToggle').onclick=()=>{
+  document.getElementById('inspector').classList.toggle('collapsed');};
+setInterval(()=>{
+  const el=document.getElementById('mbClock');
+  if(!el)return;
+  const d=new Date();
+  const wd=new Intl.DateTimeFormat(I18N.meta().intl,{weekday:'short'}).format(d);
+  const hm=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+  el.textContent=wd+' '+hm;
+},20000);
+
+renderAll();
+</script>
+</body>
+</html>

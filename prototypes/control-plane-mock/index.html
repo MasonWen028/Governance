@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Governance · SDLC 控制平面（UX 原型）</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --bg:#F7F7F5; --panel:#fff; --line:#E5E3DC; --line2:#F0EEE8;
+    --text:#1F1F1D; --muted:#6B6A64; --faint:#9B9A93;
+    --blue:#185FA5; --blue-bg:#E6F1FB;
+    --teal:#0F6E56; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber-bg:#FAEEDA;
+    --red:#A32D2D; --red-bg:#FCEBEB;
+    --green:#3B6D11; --green-bg:#EAF3DE;
+    --gray:#5F5E5A; --gray-bg:#F1EFE8;
+  }
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:13px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1480px;margin:0 auto;padding:14px}
+  .proto{display:flex;align-items:center;gap:8px;background:var(--amber-bg);border:1px solid #F0D9A8;
+    color:var(--amber);border-radius:10px;padding:7px 12px;margin-bottom:12px;font-size:12px}
+  .proto b{font-weight:500}
+  .top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+  .brand{display:flex;align-items:center;gap:7px;font-size:14px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--blue);display:inline-block}
+  .brand strong{font-weight:500}
+  .brand .proj{color:var(--muted)}
+  .sep{color:var(--faint)}
+  .spacer{flex:1}
+  .chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;border:1px solid transparent;white-space:nowrap}
+  .chip-blue{background:var(--blue-bg);color:var(--blue);border-color:#B5D4F4}
+  .chip-teal{background:var(--teal-bg);color:var(--teal);border-color:#9FE1CB}
+  .chip-amber{background:var(--amber-bg);color:var(--amber);border-color:#F0D9A8}
+  .chip-red{background:var(--red-bg);color:var(--red);border-color:#F7C1C1}
+  .chip-green{background:var(--green-bg);color:var(--green);border-color:#D6E5B8}
+  .chip-gray{background:var(--gray-bg);color:var(--gray);border-color:#E0DED5}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;
+    padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:#CFCCC2}
+  .btn-primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn-primary:hover{background:#14538F}
+  .afk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);
+    background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px}
+  .afk input{accent-color:var(--blue)}
+  .grid{display:grid;grid-template-columns:250px minmax(0,1fr) 344px;gap:12px;align-items:start}
+  @media(max-width:1240px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:12px}
+  .panel>h2{margin:0;padding:11px 13px;font-size:12.5px;font-weight:500;
+    border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px}
+  .panel>.body{padding:11px 13px}
+  .badge{margin-left:auto;background:var(--red-bg);color:var(--red);border:1px solid #F7C1C1;
+    border-radius:99px;padding:0 8px;font-size:11px}
+
+  .rail{display:flex;flex-direction:column;gap:2px}
+  .stage{display:flex;gap:9px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer;
+    border:1px solid transparent}
+  .stage:hover{background:#FAFAF8}
+  .stage.sel{border-color:#CFCCC2;background:#FAFAF8}
+  .idx{width:19px;height:19px;flex:0 0 19px;border-radius:50%;font-size:11px;display:flex;
+    align-items:center;justify-content:center;border:1px solid var(--line);color:var(--muted);background:#fff}
+  .stage.done .idx{background:var(--teal-bg);color:var(--teal);border-color:#9FE1CB}
+  .stage.active .idx{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .stage.blocked .idx{background:var(--red-bg);color:var(--red);border-color:#F7C1C1}
+  .stage .nm{font-size:12.5px;font-weight:500;line-height:1.35}
+  .stage .sk{font-size:11.5px;color:var(--faint);line-height:1.4}
+  .stage.pending .nm{color:var(--faint);font-weight:400}
+  .gateflag{color:var(--amber);font-size:11px;margin-left:2px}
+
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-bottom:10px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+  .board{display:grid;grid-template-columns:repeat(5,minmax(158px,1fr));gap:10px;overflow-x:auto;padding-bottom:4px}
+  .col{display:flex;flex-direction:column;gap:9px;min-width:158px}
+  .colhead{font-size:11px;color:var(--faint);padding-left:2px}
+  .tcard{border:1px solid var(--line);border-left-width:3px;border-radius:9px;padding:8px 9px;background:#fff}
+  .tcard.done{border-left-color:var(--teal)}
+  .tcard.prog{border-left-color:var(--blue)}
+  .tcard.ready{border-left-color:var(--amber)}
+  .tcard.blocked{border-left-color:#D3D1C7;background:#FCFCFB}
+  .tcard-h{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+  .tid{font-size:11px;color:var(--faint);font-weight:500}
+  .tcard-h .chip{margin-left:auto;padding:1px 7px;font-size:11px}
+  .ttl{font-size:12.5px;font-weight:500;line-height:1.42;margin-bottom:7px}
+  .tcard.blocked .ttl{color:var(--muted);font-weight:400}
+  .segs{display:flex;gap:3px;margin-bottom:7px}
+  .segs i{height:5px;flex:1;border-radius:2px;background:#EDEBE4}
+  .tcard.done .segs i{background:var(--teal)}
+  .tcard.prog .segs i.on{background:var(--blue)}
+  .dep{font-size:11px;color:var(--faint)}
+  .tcard.ready .dep{color:var(--amber)}
+
+  .composer{border:1px solid var(--line);border-radius:10px;padding:10px}
+  .cph{font-size:11.5px;color:var(--muted);margin-bottom:7px}
+  textarea{width:100%;min-height:62px;resize:vertical;border:1px solid var(--line);border-radius:8px;
+    padding:8px 9px;font:inherit;font-size:12.5px;color:var(--text);background:#fff;outline:none}
+  textarea:focus{border-color:#B5D4F4}
+  .crow{display:flex;align-items:center;gap:9px;margin-top:8px}
+  .hint{font-size:11px;color:var(--faint)}
+  .crow .btn{margin-left:auto}
+
+  .gate{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:9px;background:#fff}
+  .gate:last-child{margin-bottom:0}
+  .gate.warn{border-color:#F0D9A8;background:#FFFCF4}
+  .gate.crit{border-color:#F7C1C1;background:#FFFAFA}
+  .gkind{font-size:11.5px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .gate.warn .gkind{color:var(--amber)}
+  .gate.crit .gkind{color:var(--red)}
+  .gbody{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px}
+  .gq{font-size:12.5px;font-weight:500;margin:7px 0 4px;line-height:1.45}
+  .ginput{width:100%;border:1px solid var(--line);border-radius:7px;padding:5px 8px;font:inherit;
+    font-size:12.5px;background:#fff;outline:none}
+  .ginput:focus{border-color:#B5D4F4}
+  .gbtns{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .gbtns .btn{padding:4px 10px;font-size:12px}
+
+  .sub{font-size:11px;color:var(--faint);margin:11px 0 6px;letter-spacing:.02em}
+  .sub:first-child{margin-top:0}
+  .row{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
+  .row:last-child{border-bottom:0}
+  .row .k{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .v{color:var(--faint);font-size:11.5px;white-space:nowrap}
+  .stat{width:7px;height:7px;border-radius:50%;flex:0 0 7px}
+  .stat.ok{background:var(--teal)} .stat.bad{background:var(--red)} .stat.warn{background:var(--amber)}
+  .log{font-size:11.5px;color:var(--muted);line-height:1.7}
+  .log b{font-weight:500;color:var(--text)}
+
+  .toast{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:#2C2C2A;color:#fff;
+    padding:8px 15px;border-radius:9px;font-size:12.5px;opacity:0;transition:opacity .18s;pointer-events:none}
+  .toast.on{opacity:1}
+  .afkbanner{display:none;background:var(--blue-bg);border:1px solid #B5D4F4;color:var(--blue);
+    border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}
+  .afkbanner.on{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="proto"><b>UX 原型</b> · 全部为假数据，用于确认交互与信息架构，不连真实仓库 / CI / agent</div>
+
+  <header class="top">
+    <div class="brand"><span class="dot"></span><strong>Governance</strong><span class="sep">/</span><span class="proj">camera-analytics</span></div>
+    <span class="chip chip-blue">阶段 6 / 9 · 建造中</span>
+    <span class="chip chip-amber" id="chipGate">2 个阻塞点待处理</span>
+    <div class="spacer"></div>
+    <label class="afk"><input type="checkbox" id="afk"> AFK 模式 · 仅阻塞点叫我</label>
+    <button class="btn" onclick="toast('已重跑当前阶段')">重跑当前阶段</button>
+    <button class="btn btn-primary" onclick="approveAll()">全部通过</button>
+  </header>
+
+  <div class="afkbanner" id="afkbanner">AFK 模式已开启 — agent 会一路跑到下一个阻塞点，然后只推一条带上下文的通知给你。</div>
+
+  <div class="grid">
+
+    <section class="panel">
+      <h2>流水线</h2>
+      <div class="body rail" id="rail">
+        <div class="stage done"><span class="idx">1</span><div><div class="nm">概念初始化</div><div class="sk">选择工作流路径</div></div></div>
+        <div class="stage done"><span class="idx">2</span><div><div class="nm">需求澄清</div><div class="sk">/grill-with-docs<span class="gateflag">◆</span></div></div></div>
+        <div class="stage done"><span class="idx">3</span><div><div class="nm">不确定项验证</div><div class="sk">/prototype + /handoff<span class="gateflag">◆</span></div></div></div>
+        <div class="stage done"><span class="idx">4</span><div><div class="nm">规格</div><div class="sk">/to-spec</div></div></div>
+        <div class="stage blocked"><span class="idx">5</span><div><div class="nm">拆片</div><div class="sk">/to-tickets<span class="gateflag">◆</span> 待批准</div></div></div>
+        <div class="stage active"><span class="idx">6</span><div><div class="nm">建造（AFK）</div><div class="sk">/implement-spec + /tdd<span class="gateflag">◆</span></div></div></div>
+        <div class="stage pending"><span class="idx">7</span><div><div class="nm">验收</div><div class="sk">/code-review<span class="gateflag">◆</span></div></div></div>
+        <div class="stage pending"><span class="idx">8</span><div><div class="nm">发布</div><div class="sk">CI / CD<span class="gateflag">◆</span></div></div></div>
+        <div class="stage pending"><span class="idx">9</span><div><div class="nm">复盘</div><div class="sk">/retro</div></div></div>
+      </div>
+    </section>
+
+    <div>
+      <section class="panel">
+        <h2>垂直切片看板 <span class="chip chip-teal">每片穿透 4 层</span></h2>
+        <div class="body">
+          <div class="legend">
+            <span><i style="background:var(--teal)"></i>已完成</span>
+            <span><i style="background:var(--blue)"></i>进行中</span>
+            <span><i style="background:var(--amber)"></i>前沿 · 可立即开工</span>
+            <span><i style="background:#D3D1C7"></i>被阻塞</span>
+            <span style="margin-left:auto">片段顺序：数据库 → 服务 → 界面 → 测试</span>
+          </div>
+          <div class="board">
+
+            <div class="col">
+              <div class="colhead">第 1 层</div>
+              <div class="tcard done">
+                <div class="tcard-h"><span class="tid">T1</span><span class="chip chip-green">已完成</span></div>
+                <div class="ttl">单帧采集 → 分析 → 回传，端到端打通</div>
+                <div class="segs"><i></i><i></i><i></i><i></i></div>
+                <div class="dep">无阻塞 · 已合并</div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="colhead">第 2 层</div>
+              <div class="tcard done">
+                <div class="tcard-h"><span class="tid">T2</span><span class="chip chip-green">已完成</span></div>
+                <div class="ttl">采集设备注册与心跳</div>
+                <div class="segs"><i></i><i></i><i></i><i></i></div>
+                <div class="dep">依赖 T1 · 已合并</div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="colhead">第 3 层</div>
+              <div class="tcard prog">
+                <div class="tcard-h"><span class="tid">T3</span><span class="chip chip-blue">进行中</span></div>
+                <div class="ttl">实时预览页面</div>
+                <div class="segs"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+                <div class="dep">依赖 T2 · agent 运行中</div>
+              </div>
+              <div class="tcard ready">
+                <div class="tcard-h"><span class="tid">T4</span><span class="chip chip-amber">前沿</span></div>
+                <div class="ttl">批量帧分析队列</div>
+                <div class="segs"><i></i><i></i><i></i><i></i></div>
+                <div class="dep">依赖 T2 · 可立即开工</div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="colhead">第 4 层</div>
+              <div class="tcard blocked">
+                <div class="tcard-h"><span class="tid">T5</span><span class="chip chip-gray">被阻塞</span></div>
+                <div class="ttl">分析结果看板与历史查询</div>
+                <div class="segs"><i></i><i></i><i></i><i></i></div>
+                <div class="dep">依赖 T4</div>
+              </div>
+              <div class="tcard blocked">
+                <div class="tcard-h"><span class="tid">T6</span><span class="chip chip-gray">被阻塞</span></div>
+                <div class="ttl">阈值告警与通知</div>
+                <div class="segs"><i></i><i></i><i></i><i></i></div>
+                <div class="dep">依赖 T4</div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="colhead">第 5 层</div>
+              <div class="tcard blocked">
+                <div class="tcard-h"><span class="tid">T7</span><span class="chip chip-gray">被阻塞</span></div>
+                <div class="ttl">吞吐优化：12 fps → 30 fps <span class="gateflag">◆</span></div>
+                <div class="segs"><i></i><i></i><i></i><i></i></div>
+                <div class="dep">依赖 T5、T6 · 见收件箱</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>与 agent 讨论</h2>
+        <div class="body">
+          <div class="composer">
+            <div class="cph">随时补充需求、回答追问，或要求重做某一片（/grill-with-docs 会持续维护术语表与 ADR）</div>
+            <textarea placeholder="例如：并发路数先按 4 路设计，但配置要能扩到 16 路；分析结果保留 90 天，超过就归档到冷存储。"></textarea>
+            <div class="crow">
+              <span class="hint">Enter 发送 · Shift + Enter 换行</span>
+              <button class="btn btn-primary" onclick="toast('已作为澄清轮次写入本阶段上下文')">发送</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <h2>阻塞收件箱 <span class="badge" id="gateBadge">4</span></h2>
+        <div class="body" id="gates">
+
+          <article class="gate warn">
+            <div class="gkind">◆ 需求追问 · 2 项待答</div>
+            <div class="gbody">澄清阶段的问题还没答完，规格会等在这里，不会带着猜测往下走。</div>
+            <div class="gq">多路摄像头需要支持几路并发？</div>
+            <input class="ginput" placeholder="例如：先 4 路，配置可扩到 16 路">
+            <div class="gq">分析结果需要保留多久？</div>
+            <input class="ginput" placeholder="例如：90 天，之后归档冷存储">
+            <div class="gbtns">
+              <button class="btn btn-primary" onclick="resolve(this,'已记录 2 项回答，继续澄清轮次')">提交回答</button>
+              <button class="btn" onclick="toast('已转给 /to-questionnaire，生成一份清单发给你的同事')">转给别人回答</button>
+            </div>
+          </article>
+
+          <article class="gate warn">
+            <div class="gkind">◆ 拆片待批准 · 7 个垂直切片</div>
+            <div class="gbody">依赖边已按"阻塞块先做"连好，前沿是 T4。批准后建造阶段立即开工。</div>
+            <div class="gbtns">
+              <button class="btn btn-primary" onclick="resolve(this,'拆分已批准，建造阶段开工')">批准全部</button>
+              <button class="btn" onclick="toast('已进入逐条审阅模式')">逐条审阅</button>
+              <button class="btn" onclick="resolve(this,'已退回，要求按更细粒度重拆')">要求重拆</button>
+            </div>
+          </article>
+
+          <article class="gate crit">
+            <div class="gkind">◆ 缺少部署配置 · 发布阶段被阻塞</div>
+            <div class="gbody">仓库里没有找到任何服务器 / 密钥配置。这属于只有人能做的步骤，agent 不会自己编造凭据。</div>
+            <div class="gbtns">
+              <button class="btn btn-primary" onclick="toast('已启动 /wizard：生成交互式配置向导，写入 .env 与 CI secrets')">生成配置向导</button>
+              <button class="btn" onclick="toast('已静音 24 小时')">稍后提醒</button>
+              <button class="btn" onclick="resolve(this,'本次跳过发布，其余阶段继续')">本次跳过发布</button>
+            </div>
+          </article>
+
+          <article class="gate crit">
+            <div class="gkind">◆ 性能证据不达标 · 需要你裁决</div>
+            <div class="gbody">吞吐测试实测 12 fps，低于目标 30 fps（证据：bench/frames-2026-10-12.json）。agent 不自行下调目标。</div>
+            <div class="gbtns">
+              <button class="btn btn-primary" onclick="resolve(this,'已退回 T7，按新方案重做该切片')">重做该切片</button>
+              <button class="btn" onclick="resolve(this,'目标已下调为 15 fps，并记入 ADR')">下调目标</button>
+              <button class="btn" onclick="resolve(this,'接受当前指标，记为已知限制')">接受现状</button>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>CI / CD 与服务器</h2>
+        <div class="body">
+          <div class="sub">流水线</div>
+          <div class="row"><span class="stat ok"></span><span class="k">#482 · integration-branch</span><span class="v">通过 · 3m12s</span></div>
+          <div class="row"><span class="stat ok"></span><span class="k">#481 · 合并 T2</span><span class="v">通过 · 2m58s</span></div>
+          <div class="row"><span class="stat bad"></span><span class="k">#480 · T3 首次提交</span><span class="v">失败 · 类型错误</span></div>
+
+          <div class="sub">服务器</div>
+          <div class="row"><span class="stat ok"></span><span class="k">staging · 10.0.4.21</span><span class="v">健康 · 12ms</span></div>
+          <div class="row"><span class="stat warn"></span><span class="k">prod · 10.0.9.7</span><span class="v">运行 v0.4.1 · 未配置</span></div>
+
+          <div class="sub">发布记录</div>
+          <div class="row"><span class="k">v0.4.2 · 2026-10-12</span><span class="v">待批准</span></div>
+          <div class="row"><span class="k">v0.4.1 · 2026-10-09</span><span class="v">已发布 · 回滚点</span></div>
+          <div class="row"><span class="k">v0.4.0 · 2026-10-03</span><span class="v">已发布</span></div>
+
+          <div class="sub">最近事件</div>
+          <div class="log">
+            <div><b>16:41</b> 建造阶段在 T3 上产出提交 a91c2fe，/tdd 红→绿 4 个切片</div>
+            <div><b>16:38</b> 门控引擎判定：T7 需要人工裁决，写入收件箱</div>
+            <div><b>16:22</b> /code-review 双轴报告已归档到 .scratch/camera-analytics/reviews/</div>
+            <div><b>16:05</b> 拆片完成，7 个切片 + 依赖边已写入 tracker</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var rail = document.getElementById('rail');
+  rail.addEventListener('click', function (e) {
+    var st = e.target.closest('.stage');
+    if (!st) return;
+    Array.prototype.forEach.call(rail.querySelectorAll('.stage'), function (s) { s.classList.remove('sel'); });
+    st.classList.add('sel');
+  });
+
+  document.getElementById('afk').addEventListener('change', function () {
+    document.getElementById('afkbanner').classList.toggle('on', this.checked);
+  });
+
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove('on'); }, 2400);
+  }
+
+  function resolve(btn, msg) {
+    var gate = btn.closest('.gate');
+    gate.style.opacity = '0.4';
+    gate.style.pointerEvents = 'none';
+    Array.prototype.forEach.call(gate.querySelectorAll('.btn'), function (b) { b.disabled = true; });
+    var badge = document.getElementById('gateBadge');
+    badge.textContent = Math.max(0, parseInt(badge.textContent, 10) - 1);
+    toast(msg);
+  }
+
+  function approveAll() {
+    Array.prototype.forEach.call(document.querySelectorAll('.gate'), function (g) {
+      g.style.opacity = '0.4';
+      g.style.pointerEvents = 'none';
+    });
+    document.getElementById('gateBadge').textContent = '0';
+    toast('已按默认建议全部通过，agent 继续往下跑');
+  }
+</script>
+</body>
+</html>

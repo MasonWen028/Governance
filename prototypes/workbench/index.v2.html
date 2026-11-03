@@ -1,0 +1,1403 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Governance Workbench</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.20/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.20/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.20/600.css">
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --accent:#0071e3; --accent-h:#0077ed; --accent-d:#0062cc;
+    --label:#1d1d1f; --label-2:#6e6e73; --label-3:#86868b; --label-4:#aeaeb2;
+    --sep:rgba(60,60,67,.16); --sep2:rgba(60,60,67,.09);
+    --fill:rgba(120,120,128,.10); --fill2:rgba(120,120,128,.16);
+    --chrome:#f6f6f8; --content:#ffffff;
+
+    --blue:#007aff;   --blue-t:rgba(0,122,255,.11);    --blue-d:#0062cc;
+    --green:#34c759;  --green-t:rgba(52,199,89,.14);   --green-d:#248a3d;
+    --orange:#ff9500; --orange-t:rgba(255,149,0,.16);  --orange-d:#b25000;
+    --red:#ff3b30;    --red-t:rgba(255,59,48,.12);     --red-d:#d70015;
+    --purple:#af52de; --purple-t:rgba(175,82,222,.13); --purple-d:#8944ab;
+    --teal:#30b0c7;   --teal-t:rgba(48,176,199,.15);   --teal-d:#0071a4;
+    --gray:#8e8e93;   --gray-t:rgba(120,120,128,.12);  --gray-d:#636366;
+
+    --sh1:0 .5px 1px rgba(0,0,0,.045), 0 1px 3px rgba(0,0,0,.04);
+    --sh2:0 1px 2px rgba(0,0,0,.05), 0 8px 22px rgba(0,0,0,.06);
+    --sh3:0 16px 48px rgba(0,0,0,.17), 0 3px 10px rgba(0,0,0,.08);
+
+    --r1:6px; --r2:9px; --r3:12px; --r4:16px;
+    --ease:cubic-bezier(.32,.72,0,1);
+    --sans:-apple-system,BlinkMacSystemFont,'Inter','SF Pro Text','Segoe UI Variable Text','Segoe UI','PingFang SC','Microsoft YaHei UI',system-ui,sans-serif;
+    --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--content);color:var(--label);overflow:hidden;
+    font:400 13px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;font-feature-settings:"cv11","ss01";
+  }
+  .app{height:100vh;display:flex;flex-direction:column;background:var(--content)}
+  .shell{flex:1;display:flex;min-height:0}
+
+  .menubar{flex:0 0 28px;display:flex;align-items:center;padding:0 8px;position:relative;z-index:40;
+    background:rgba(246,246,248,.84);border-bottom:.5px solid var(--sep);user-select:none;
+    backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
+  .mb-app{font-size:13px;font-weight:600;letter-spacing:-.012em;padding:0 12px 0 6px;color:var(--label)}
+  .mtitle{font-size:13px;color:var(--label);padding:2px 10px;border-radius:5px;cursor:default;
+    transition:background .12s var(--ease),color .12s var(--ease)}
+  .mtitle:hover{background:rgba(0,0,0,.06)}
+  .mtitle.open{background:var(--accent);color:#fff}
+  .extras{margin-left:auto;display:flex;align-items:center;gap:15px;font-size:12px;
+    color:var(--label-2);font-variant-numeric:tabular-nums}
+  .extras .x{display:flex;align-items:center;gap:5px}
+  .extras .x svg{width:12px;height:12px;flex:0 0 12px}
+
+  .menu{position:absolute;top:26px;min-width:236px;padding:5px;display:none;z-index:41;
+    background:rgba(255,255,255,.92);border:.5px solid rgba(0,0,0,.09);border-radius:8px;
+    box-shadow:0 12px 36px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.07);
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
+  .menu.on{display:block;animation:pop .14s var(--ease)}
+  .mitem{display:flex;align-items:center;gap:8px;padding:4px 9px;border-radius:5px;font-size:13px;
+    color:var(--label);white-space:nowrap;position:relative}
+  .mitem:not(.dis):hover{background:var(--accent);color:#fff}
+  .mitem.dis{color:var(--label-4)}
+  .mitem .mc{width:13px;flex:0 0 13px;font-size:11.5px}
+  .mitem .ml{flex:1;overflow:hidden;text-overflow:ellipsis}
+  .mitem .mk{color:var(--label-3);font-size:12.5px;letter-spacing:.03em}
+  .mitem .arw{color:var(--label-4);font-size:10px;margin-left:6px}
+  .mitem:not(.dis):hover .mk,.mitem:not(.dis):hover .arw{color:rgba(255,255,255,.88)}
+  .msep{height:.5px;background:var(--sep);margin:5px 9px}
+  .mitem.has-sub>.menu{top:-5px;left:100%;margin-left:3px}
+  .mitem.has-sub:not(.dis):hover>.menu{display:block}
+
+  .toolbar{flex:0 0 52px;display:flex;align-items:center;gap:12px;padding:0 16px;
+    background:var(--chrome);border-bottom:.5px solid var(--sep);user-select:none}
+  .iconbtn{width:28px;height:28px;border:0;background:transparent;border-radius:var(--r1);
+    color:var(--label-2);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:background .16s var(--ease),color .16s var(--ease)}
+  .iconbtn:hover{background:var(--fill);color:var(--label)}
+  .iconbtn svg{width:17px;height:17px}
+  .tb-title{display:flex;flex-direction:column;line-height:1.22;min-width:0}
+  .tb-title .tt{font-size:13.5px;font-weight:600;letter-spacing:-.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-title .ts{font-size:11px;color:var(--label-3)}
+  .sp{flex:1}
+  .search{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;width:216px;
+    background:var(--fill);border-radius:var(--r2);color:var(--label-3);font-size:12.5px;
+    border:.5px solid transparent;transition:all .18s var(--ease)}
+  .search:hover{background:var(--fill2)}
+  .search svg{width:13px;height:13px;flex:0 0 13px}
+
+  .main-col{flex:1;display:flex;flex-direction:column;min-width:0}
+  .cols{flex:1;display:flex;min-height:0}
+
+  .sidebar{flex:0 0 238px;background:var(--chrome);border-right:.5px solid var(--sep);
+    display:flex;flex-direction:column;min-height:0;transition:margin-left .28s var(--ease)}
+  .sidebar.collapsed{margin-left:-238px}
+  .sb-scroll{flex:1;overflow-y:auto;padding:8px 10px 12px;min-height:0}
+  .sec{font-size:11px;font-weight:600;color:var(--label-3);letter-spacing:.01em;
+    padding:12px 8px 6px;user-select:none}
+  .sec:first-child{padding-top:2px}
+  .pitem{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r1);
+    cursor:pointer;transition:background .14s var(--ease)}
+  .pitem:hover{background:var(--fill)}
+  .pitem.on{background:var(--fill2)}
+  .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+  .dot.run{background:var(--blue)} .dot.blk{background:var(--red)}
+  .dot.ok{background:var(--green)} .dot.idle{background:#c7c7cc}
+  .pitem .nm{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pitem.on .nm{font-weight:500}
+  .cnt{font-size:10.5px;font-weight:600;color:var(--red-d);background:var(--red-t);
+    border-radius:99px;padding:1px 6px;min-width:18px;text-align:center}
+  .meta{padding:6px 8px;font-size:11.5px;color:var(--label-2);line-height:1.85}
+  .meta .mono{font-family:var(--mono);font-size:11px;color:var(--label-2)}
+
+  .content{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--content)}
+  .chead{flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:20px 24px 14px;
+    border-bottom:.5px solid var(--sep2)}
+  .chead h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.022em;flex:1;min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .seg{display:flex;gap:2px;padding:2px;background:var(--fill);border-radius:10px;flex:0 0 auto}
+  .segbtn{position:relative;border:0;background:transparent;font:inherit;font-size:12.5px;
+    font-weight:500;color:var(--label-2);padding:5px 12px;border-radius:8px;cursor:pointer;
+    transition:all .18s var(--ease);font-family:inherit}
+  .segbtn:hover{color:var(--label)}
+  .segbtn.on{background:#fff;color:var(--label);box-shadow:0 .5px 1px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.07)}
+  .segdot{position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+  .cbody{flex:1;overflow-y:auto;padding:20px 24px 28px}
+
+  .toolbar{position:relative}
+  .crumbs{display:flex;align-items:center;gap:3px;min-width:0}
+  .crumb-btn{display:flex;align-items:center;gap:7px;color:var(--label);font-size:13.5px;
+    font-weight:600;letter-spacing:-.012em;padding:4px 9px;border-radius:7px;cursor:pointer;
+    background:var(--fill);border:.5px solid transparent;
+    transition:background .14s var(--ease),border-color .14s var(--ease)}
+  .crumb-btn:hover{background:var(--fill2);border-color:var(--sep)}
+  .crumb-btn svg{width:11px;height:11px;color:var(--label-3);flex:0 0 11px}
+  .crumb-to{display:flex;align-items:center;gap:7px;color:var(--label-2);font-size:13.5px;
+    padding:4px 9px;border-radius:7px;cursor:pointer;transition:background .14s var(--ease)}
+  .crumb-to:hover{background:var(--fill);color:var(--label)}
+  .crumb-sep{color:var(--label-4);font-size:12px;padding:0 1px}
+  .crumb-last{display:flex;align-items:center;gap:7px;color:var(--label);font-size:13.5px;
+    font-weight:600;letter-spacing:-.012em;padding:4px 9px;border-radius:7px;cursor:pointer;
+    background:var(--fill);border:.5px solid transparent;max-width:280px;
+    transition:background .14s var(--ease),border-color .14s var(--ease)}
+  .crumb-last:hover{background:var(--fill2);border-color:var(--sep)}
+  .crumb-last span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .crumb-sub{font-size:11.5px;color:var(--label-3);margin-left:6px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+
+  .projsw{position:absolute;top:46px;left:14px;min-width:302px;padding:5px;display:none;z-index:39;
+    background:rgba(255,255,255,.94);border:.5px solid rgba(0,0,0,.09);border-radius:9px;
+    box-shadow:0 14px 40px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.07);
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
+  .projsw.on{display:block;animation:pop .15s var(--ease)}
+  .switem{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;font-size:13px}
+  .switem:hover{background:var(--fill)}
+  .switem.on{background:var(--blue-t)}
+  .switem .sw-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .switem .sw-mt{font-size:11px;color:var(--label-3);font-family:var(--mono)}
+  .switem .chk{color:var(--accent);font-size:11px;width:12px;flex:0 0 12px}
+
+  .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);padding:14px 16px;
+    box-shadow:var(--sh1)}
+  .tile .tl{font-size:11px;font-weight:600;color:var(--label-3);margin-bottom:7px;letter-spacing:.01em}
+  .tile .tv{font-size:26px;font-weight:600;letter-spacing:-.032em;line-height:1.05;
+    font-variant-numeric:tabular-nums}
+  .tile .tu{font-size:13px;font-weight:500;color:var(--label-3);margin-left:3px}
+  .tile .tn{font-size:11px;color:var(--label-3);margin-top:6px}
+
+  .ptbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ptbl th{text-align:left;font-weight:600;color:var(--label-3);font-size:10.5px;letter-spacing:.02em;
+    padding:9px 12px;border-bottom:.5px solid var(--sep);white-space:nowrap}
+  .ptbl td{padding:13px 12px;border-bottom:.5px solid var(--sep2);vertical-align:middle}
+  .ptbl tbody tr{cursor:pointer;transition:background .14s var(--ease)}
+  .ptbl tbody tr:hover{background:rgba(120,120,128,.055)}
+  .ptbl tbody tr:last-child td{border-bottom:0}
+  .pnm{display:flex;align-items:center;gap:10px;min-width:0}
+  .pnm .txt{min-width:0}
+  .pnm .n1{font-size:13px;font-weight:500;letter-spacing:-.005em;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .pnm .n2{font-size:10.5px;color:var(--label-3);font-family:var(--mono);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .mini{display:flex;gap:2px;width:132px}
+  .mini i{height:6px;flex:1;border-radius:2px;background:rgba(120,120,128,.17)}
+  .mini i.done{background:var(--green)}
+  .mini i.active{background:var(--blue)}
+  .mini i.blocked{background:var(--red)}
+  .tnum{font-variant-numeric:tabular-nums;color:var(--label-2)}
+  .nowrap{white-space:nowrap}
+
+  .tl{overflow-x:auto;margin:0 -4px;padding:0 4px}
+  .tl-inner{min-width:640px}
+  .tlhead,.tlrow{display:grid;grid-template-columns:184px minmax(0,1fr);align-items:center;gap:14px}
+  .tlhead{padding-bottom:8px}
+  .tlhead .hcell{font-size:10.5px;font-weight:600;color:var(--label-4);text-align:center;
+    letter-spacing:.02em}
+  .tlrow{padding:9px 0;border-top:.5px solid var(--sep2);cursor:pointer;
+    transition:background .14s var(--ease)}
+  .tlrow:hover{background:rgba(120,120,128,.045)}
+  .tlname{display:flex;align-items:center;gap:8px;min-width:0;font-size:12.5px;font-weight:500}
+  .tlname span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tltrack{display:grid;grid-template-columns:repeat(9,1fr);gap:2px}
+  .tltrack i{height:22px;border-radius:4px;background:rgba(120,120,128,.12);
+    transition:transform .16s var(--ease)}
+  .tlrow:hover .tltrack i{transform:scaleY(1.06)}
+  .tltrack i.done{background:var(--green-t);border:.5px solid rgba(52,199,89,.5)}
+  .tltrack i.active{background:var(--blue);box-shadow:0 1px 4px rgba(0,122,255,.36)}
+  .tltrack i.blocked{background:var(--red-t);border:.5px solid rgba(255,59,48,.5)}
+  .tllegend{display:flex;gap:15px;font-size:11.5px;color:var(--label-2);margin-top:16px;flex-wrap:wrap}
+  .tllegend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+
+  .feed{display:flex;flex-direction:column}
+  .frow{display:flex;gap:13px;padding:11px 0;border-bottom:.5px solid var(--sep2);align-items:flex-start}
+  .frow:last-child{border-bottom:0}
+  .ftime{font-family:var(--mono);font-size:11px;color:var(--label-3);flex:0 0 40px;padding-top:2px;
+    font-variant-numeric:tabular-nums}
+  .fdot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;margin-top:7px}
+  .fbody{flex:1;min-width:0;font-size:12.5px;color:var(--label-2);line-height:1.55}
+  .fbody b{color:var(--label);font-weight:500}
+  .fproj{font-size:10.5px;color:var(--label-3);font-family:var(--mono);margin-top:3px}
+
+  .card{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);box-shadow:var(--sh1);
+    margin-bottom:16px;overflow:hidden}
+  .card>h3{margin:0;padding:13px 16px;font-size:13px;font-weight:600;letter-spacing:-.005em;
+    display:flex;align-items:center;gap:9px;border-bottom:.5px solid var(--sep2)}
+  .card>.bd{padding:16px}
+
+  .pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;
+    border-radius:var(--r1);padding:2px 7px;white-space:nowrap}
+  .p-blue{background:var(--blue-t);color:var(--blue-d)}
+  .p-green{background:var(--green-t);color:var(--green-d)}
+  .p-orange{background:var(--orange-t);color:var(--orange-d)}
+  .p-red{background:var(--red-t);color:var(--red-d)}
+  .p-purple{background:var(--purple-t);color:var(--purple-d)}
+  .p-teal{background:var(--teal-t);color:var(--teal-d)}
+  .p-gray{background:var(--gray-t);color:var(--gray-d)}
+
+  .btn{font:inherit;font-size:12.5px;font-weight:500;border-radius:var(--r2);padding:5px 13px;
+    cursor:pointer;border:.5px solid rgba(0,0,0,.11);background:#fff;color:var(--label);
+    box-shadow:0 .5px 1px rgba(0,0,0,.04);font-family:inherit;
+    transition:background .14s var(--ease),transform .12s var(--ease),border-color .14s var(--ease)}
+  .btn:hover{background:#fafafa}
+  .btn:active{transform:scale(.975)}
+  .btn:disabled{opacity:.42;cursor:default;transform:none}
+  .btn-p{background:var(--accent);border-color:transparent;color:#fff;
+    box-shadow:0 1px 3px rgba(0,113,227,.32)}
+  .btn-p:hover{background:var(--accent-h)}
+  .btn-t{border-color:transparent;background:transparent;box-shadow:none;color:var(--accent);
+    padding:5px 9px}
+  .btn-t:hover{background:var(--blue-t)}
+
+  .split{display:grid;grid-template-columns:242px minmax(0,1fr);gap:16px;align-items:start}
+  .rail{display:flex;flex-direction:column;gap:1px}
+  .stage{display:flex;gap:10px;padding:7px 9px;border-radius:var(--r2);cursor:pointer;
+    transition:background .14s var(--ease)}
+  .stage:hover{background:var(--fill)}
+  .stage.on{background:var(--fill2)}
+  .idx{width:20px;height:20px;flex:0 0 20px;border-radius:50%;font-size:10.5px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;background:var(--fill2);color:var(--label-2)}
+  .stage.done .idx{background:var(--green-t);color:var(--green-d)}
+  .stage.active .idx{background:var(--accent);color:#fff}
+  .stage.blocked .idx{background:var(--red-t);color:var(--red-d)}
+  .stage .nm{font-size:12.5px;font-weight:500;line-height:1.34;letter-spacing:-.005em}
+  .stage .sk{font-size:11px;color:var(--label-3);line-height:1.45;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:158px}
+  .stage.pending .nm{color:var(--label-3);font-weight:400}
+  .gf{color:var(--orange);margin-left:3px;font-size:10px}
+
+  .drow{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:.5px solid var(--sep2)}
+  .drow:first-child{padding-top:2px}
+  .drow:last-child{border-bottom:0;padding-bottom:2px}
+  .ibadge{width:26px;height:26px;flex:0 0 26px;border-radius:8px;display:flex;align-items:center;
+    justify-content:center}
+  .ibadge svg{width:15px;height:15px}
+  .dl{font-size:11px;font-weight:600;color:var(--label-3);margin-bottom:3px;letter-spacing:.01em}
+  .dv{font-size:12.5px;color:var(--label-2);line-height:1.6}
+  .dv b{color:var(--label);font-weight:600}
+  .dv .mono{font-family:var(--mono);font-size:11.5px}
+
+  .dhead{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+  .dhead .nm{font-size:14px;font-weight:600;letter-spacing:-.012em}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--label-2);margin-bottom:16px}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2.5px;margin-right:5px}
+
+  .board{display:grid;grid-template-columns:repeat(5,minmax(164px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
+  .col{display:flex;flex-direction:column;gap:10px;min-width:164px}
+  .colhead{font-size:10.5px;font-weight:600;color:var(--label-4);padding-left:3px;letter-spacing:.02em}
+  .tcard{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);padding:11px 12px;
+    box-shadow:var(--sh1);transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
+  .tcard:hover{transform:translateY(-1px);box-shadow:var(--sh2)}
+  .tcard.blocked{background:#fafafa;box-shadow:none}
+  .tcard.blocked:hover{transform:none;box-shadow:none}
+  .th{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .tid{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--label-3)}
+  .th .pill{margin-left:auto}
+  .ttl{font-size:12.5px;font-weight:500;line-height:1.44;margin-bottom:9px;letter-spacing:-.005em}
+  .tcard.blocked .ttl{color:var(--label-2);font-weight:400}
+  .segs{display:flex;gap:3px;margin-bottom:8px}
+  .segs i{height:4px;flex:1;border-radius:2px;background:rgba(120,120,128,.16)}
+  .tcard.done .segs i{background:var(--green)}
+  .tcard.prog .segs i.on{background:var(--blue)}
+  .tcard.ready .segs i.on{background:var(--orange)}
+  .dep{font-size:11px;color:var(--label-3)}
+
+  .gate{background:#fff;border:.5px solid var(--sep);border-radius:var(--r3);padding:14px;
+    margin-bottom:12px;box-shadow:var(--sh1);cursor:pointer;
+    transition:border-color .16s var(--ease),box-shadow .16s var(--ease),transform .18s var(--ease)}
+  .gate:hover{transform:translateY(-1px);box-shadow:var(--sh2)}
+  .gate.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.14),var(--sh1)}
+  .gh{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .gh .gicon{width:24px;height:24px;flex:0 0 24px;border-radius:7px;display:flex;align-items:center;
+    justify-content:center}
+  .gh .gicon svg{width:14px;height:14px}
+  .gh .nm{font-size:13px;font-weight:600;letter-spacing:-.005em;flex:1;min-width:0}
+  .gb{font-size:12.5px;color:var(--label-2);line-height:1.62;margin-bottom:11px}
+  .gmeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .gbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .done-gate{opacity:.45;pointer-events:none}
+
+  .kv{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--sep2);
+    font-size:12.5px}
+  .kv:last-child{border-bottom:0}
+  .kv .k{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kv .v{color:var(--label-3);font-size:11.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .sdot{width:7px;height:7px;border-radius:50%;flex:0 0 7px}
+  .sdot.ok{background:var(--green)} .sdot.bad{background:var(--red)} .sdot.warn{background:var(--orange)}
+  .sub{font-size:11px;font-weight:600;color:var(--label-3);margin:18px 0 4px;letter-spacing:.01em}
+  .sub:first-child{margin-top:0}
+  .log{font-size:12px;color:var(--label-2);line-height:1.9;margin-top:6px}
+  .log b{font-weight:600;color:var(--label);font-variant-numeric:tabular-nums;margin-right:8px}
+
+  table.audit{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.audit th{text-align:left;font-weight:600;color:var(--label-3);font-size:10.5px;
+    letter-spacing:.02em;padding:9px 12px;border-bottom:.5px solid var(--sep)}
+  table.audit td{padding:11px 12px;border-bottom:.5px solid var(--sep2);color:var(--label-2)}
+  table.audit tr:last-child td{border-bottom:0}
+  table.audit td:first-child{color:var(--label);font-weight:500}
+  table.audit .mono{font-family:var(--mono);font-size:11px}
+
+  .inspector{flex:0 0 336px;background:var(--chrome);border-left:.5px solid var(--sep);
+    overflow-y:auto;padding:16px 14px;transition:margin-right .28s var(--ease)}
+  .inspector.collapsed{margin-right:-336px}
+  .ihead{display:flex;align-items:center;gap:8px;padding:0 2px 12px}
+  .ihead h2{margin:0;font-size:14px;font-weight:600;letter-spacing:-.012em;flex:1}
+  .field{margin-bottom:14px}
+  .field>label{display:block;font-size:11px;font-weight:600;color:var(--label-3);margin-bottom:6px;
+    letter-spacing:.01em}
+  .field input[type=text],.field textarea,.field select{width:100%;font:inherit;font-size:12.5px;
+    color:var(--label);background:#fff;border:.5px solid rgba(0,0,0,.12);border-radius:var(--r2);
+    padding:6px 10px;outline:none;font-family:inherit;
+    transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+  .field textarea{min-height:60px;resize:vertical;line-height:1.55}
+  .field select{appearance:none;-webkit-appearance:none;padding-right:28px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.6 6 7.6 9 4.6' fill='none' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 9px center}
+  .field input:focus,.field textarea:focus,.field select:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.16)}
+  .hint{font-size:10.5px;color:var(--label-3);margin-top:5px;line-height:1.5}
+  .checks{display:flex;flex-direction:column;gap:6px}
+  .checks label{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--label);
+    background:#fff;border:.5px solid var(--sep);border-radius:var(--r2);padding:7px 10px;cursor:pointer;
+    transition:border-color .16s var(--ease),background .16s var(--ease)}
+  .checks label:hover{border-color:rgba(0,0,0,.2)}
+  .checks input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;margin:0;flex:0 0 14px}
+  .sw{display:flex;align-items:center;gap:10px;font-size:12.5px;cursor:pointer}
+  .sw input{position:absolute;opacity:0;pointer-events:none}
+  .sw i{width:40px;height:24px;flex:0 0 40px;border-radius:12px;background:rgba(120,120,128,.30);
+    position:relative;transition:background .22s var(--ease)}
+  .sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.04);
+    transition:transform .22s var(--ease)}
+  .sw input:checked+i{background:var(--green)}
+  .sw input:checked+i::after{transform:translateX(16px)}
+
+  .statusbar{flex:0 0 26px;display:flex;align-items:center;gap:16px;padding:0 16px;
+    background:var(--chrome);border-top:.5px solid var(--sep);font-size:11px;color:var(--label-3);
+    user-select:none}
+  .statusbar .sp{flex:1}
+  .statusbar b{font-weight:600;color:var(--label-2);font-variant-numeric:tabular-nums}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:center;
+    justify-content:center;z-index:50;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+  .overlay.on{display:flex;animation:fade .2s var(--ease)}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+  .sheet{background:#fff;border-radius:var(--r4);width:540px;max-height:86vh;overflow-y:auto;
+    box-shadow:var(--sh3);animation:pop .26s var(--ease)}
+  .sheet>header{position:sticky;top:0;background:rgba(255,255,255,.86);
+    backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+    padding:15px 18px;border-bottom:.5px solid var(--sep2);display:flex;align-items:center;gap:10px;z-index:1}
+  .sheet>header h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-.012em}
+  .sheet>header .x{margin-left:auto;border:0;background:var(--fill);color:var(--label-2);
+    width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;
+    display:flex;align-items:center;justify-content:center;transition:background .14s var(--ease)}
+  .sheet>header .x:hover{background:var(--fill2)}
+  .sheet .mb{padding:18px}
+  .sheet footer{padding:14px 18px;border-top:.5px solid var(--sep2);display:flex;gap:9px;
+    justify-content:flex-end;position:sticky;bottom:0;background:rgba(255,255,255,.86);
+    backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
+
+  .toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%) translateY(6px);
+    background:rgba(28,28,30,.88);backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    color:#fff;padding:9px 17px;border-radius:99px;font-size:12.5px;font-weight:500;
+    opacity:0;transition:opacity .2s var(--ease),transform .24s var(--ease);
+    pointer-events:none;z-index:60;box-shadow:var(--sh2)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{padding:34px 16px;text-align:center;color:var(--label-3);font-size:12.5px;line-height:1.7}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.2);border-radius:99px;border:3px solid transparent;
+    background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.32);background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="menubar" id="menubar"></nav>
+
+  <div class="shell">
+
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <div class="main-col">
+      <div class="toolbar">
+        <button class="iconbtn" id="sbToggle" title="收起 / 展开侧栏">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2.2"/><path d="M6.2 2.8v10.4"/></svg>
+        </button>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="sp"></div>
+        <div class="search">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.2"/><path d="m10.2 10.2 3 3"/></svg>
+          搜索项目、切片、记录
+        </div>
+        <button class="iconbtn" id="inspToggle" title="收起 / 展开检查器">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2.2"/><path d="M9.8 2.8v10.4"/></svg>
+        </button>
+        <div class="projsw" id="projsw"></div>
+      </div>
+
+      <div class="cols">
+        <main class="content">
+          <div class="chead">
+            <h1 id="bigTitle">流水线与阶段档案</h1>
+            <div class="seg" id="seg"></div>
+          </div>
+          <div class="cbody" id="main"></div>
+        </main>
+        <aside class="inspector" id="inspector"></aside>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="statusbar" id="statusbar"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <header>
+      <h3>插入验收门</h3>
+      <button class="x" onclick="closeModal()">✕</button>
+    </header>
+    <div class="mb">
+      <div class="field" id="mProjWrap" style="display:none">
+        <label>挂到哪个项目</label>
+        <select id="mProj"></select>
+      </div>
+      <div class="field">
+        <label>挂在哪里</label>
+        <select id="mScope"></select>
+      </div>
+      <div class="field">
+        <label>门名</label>
+        <input type="text" id="mName" placeholder="例如：吞吐方案复核">
+      </div>
+      <div class="field">
+        <label>验收人（角色，不是人）</label>
+        <select id="mOwner">
+          <option>PO（你）</option><option>技术负责人</option><option>QA / 验收</option>
+          <option>运维 / 发布</option><option>安全</option><option>客户代表</option>
+        </select>
+        <div class="hint">现在这些角色都是你。将来把人分派到角色上，门本身不用改。</div>
+      </div>
+      <div class="field">
+        <label>验收方法（可多选，会叠加执行）</label>
+        <div class="checks">
+          <label><input type="checkbox" value="自动检查" checked>自动检查 — CI / 类型 / 测试</label>
+          <label><input type="checkbox" value="自检报告">自检报告 — 产出者必须附证据文件</label>
+          <label><input type="checkbox" value="侧向验证" checked>侧向验证 — 平行 agent 换视角复核</label>
+          <label><input type="checkbox" value="交叉验证">交叉验证 — 要求两条独立证据</label>
+          <label><input type="checkbox" value="对抗验证">对抗验证 — 红队 agent 找反例</label>
+          <label><input type="checkbox" value="人工签署">人工签署 — 必须由验收人点通过</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>未通过时做什么</label>
+        <select id="mFail">
+          <option>退回该切片，按新设计重做</option><option>下调目标并记入 ADR</option>
+          <option>接受现状，记为已知限制</option><option>升级给人处理，暂停后续阶段</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>阻塞</label>
+        <label class="sw"><input type="checkbox" id="mBlock" checked><i></i>阻塞后续阶段（不通过就不往下走）</label>
+      </div>
+      <div class="field">
+        <label>备注 / 给 agent 的指令</label>
+        <textarea id="mNote" placeholder="例如：这一片涉及并发，必须同时有压测和真实链路两条证据。"></textarea>
+      </div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-p" onclick="createGate()">创建并挂上</button>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STATE={scope:'portfolio',project:'camera',view:'pipeline',pview:'overview',stage:1,gate:null,afk:false,sw:false};
+const VIEWNAME={pipeline:'流水线与阶段档案',board:'垂直切片看板',inbox:'阻塞收件箱',releases:'CI / CD 与服务器',records:'全部记录'};
+const PVIEWNAME={overview:'项目总览',timeline:'阶段路线图',activity:'跨项目动态'};
+const STAGES=['概念','澄清','验证','规格','拆片','建造','验收','发布','复盘'];
+
+const ICON={
+  input:'<path d="M8 2.6v7.2m0 0 2.9-2.9M8 9.8 5.1 6.9"/><path d="M3.2 13.2h9.6"/>',
+  action:'<path d="M3.4 4.6h9.2M3.4 8h9.2M3.4 11.4h6"/>',
+  artifact:'<path d="M8 2.8 12.9 5.4v5.2L8 13.2 3.1 10.6V5.4z"/><path d="M8 8.1 12.9 5.4M8 8.1 3.1 5.4M8 8.1v5.1"/>',
+  gate:'<path d="M8 2.4 12.6 4.3v4.2c0 2.6-1.9 4.5-4.6 5.1-2.7-.6-4.6-2.5-4.6-5.1V4.3z"/>',
+  check:'<path d="M3.4 8.4 6.4 11.4 12.6 4.8"/>',
+  clock:'<circle cx="8" cy="8" r="5.4"/><path d="M8 5.2V8l1.9 1.3"/>',
+  bolt:'<path d="M8.8 2.4 4.2 8.8h3.1l-.6 4.8 4.6-6.4H8.2z"/>',
+  wrench:'<path d="M10.9 2.6a3.4 3.4 0 0 0-4.4 4.3L2.9 10.5l2.6 2.6 3.6-3.6a3.4 3.4 0 0 0 4.3-4.4l-2 2-1.6-1.6z"/>'
+};
+function svg(p){return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';}
+
+const MENUS=[
+ {t:'文件',items:[
+   {l:'新建项目…',k:'⌘N',a:'newProject'},
+   {l:'打开工作区…',k:'⌘O',a:'openWs'},
+   {l:'导入现有仓库…',a:'importRepo'},
+   {l:'重新扫描 .scratch/ 与 tracker',a:'rescan'},
+   '-',
+   {l:'项目设置…',k:'⌘,',a:'settings'},
+   {l:'关闭项目',dis:true}
+ ]},
+ {t:'编辑',items:[
+   {l:'撤销',k:'⌘Z',dis:true},{l:'重做',k:'⇧⌘Z',dis:true},
+   '-',
+   {l:'拷贝阶段档案',k:'⌘C',a:'copyDossier'},
+   {l:'导出审计表…',a:'exportAudit'},
+   '-',
+   {l:'全部通过收件箱',k:'⌘⏎',a:'approveAll'}
+ ]},
+ {t:'视图',items:[
+   {l:'项目总览（全部项目）',k:'⌘0',a:'pview:overview',c:'overview'},
+   {l:'阶段路线图',k:'⌘6',a:'pview:timeline',c:'timeline'},
+   {l:'跨项目动态',k:'⌘7',a:'pview:activity',c:'activity'},
+   '-',
+   {l:'流水线与档案',k:'⌘1',a:'view:pipeline',c:'pipeline',proj:true},
+   {l:'切片看板',k:'⌘2',a:'view:board',c:'board',proj:true},
+   {l:'收件箱',k:'⌘3',a:'view:inbox',c:'inbox',proj:true},
+   {l:'发布与服务器',k:'⌘4',a:'view:releases',c:'releases',proj:true},
+   {l:'全部记录',k:'⌘5',a:'view:records',c:'records',proj:true},
+   '-',
+   {l:'显示侧栏',k:'⌃⌘S',a:'toggleSidebar',c:'sidebar'},
+   {l:'显示检查器',k:'⌥⌘I',a:'toggleInspector',c:'inspector'}
+ ]},
+ {t:'运行',items:[
+   {l:'推进当前阶段',k:'⌘R',a:'advance'},
+   {l:'重跑当前阶段',a:'rerun'},
+   '-',
+   {l:'AFK 模式（仅阻塞点叫我）',a:'toggleAfk',c:'afk'},
+   {l:'暂停所有 agent',a:'pauseAll'},
+   '-',
+   {l:'插入验收门…',k:'⌘G',a:'insertGate'}
+ ]},
+ {t:'门控',items:[
+   {l:'门的默认配置…',a:'gateDefaults'},
+   {l:'验收方法预设',sub:[
+     {l:'严格 · 全叠加',a:'preset:strict'},
+     {l:'标准 · 交叉验证 + 人工签署',a:'preset:standard'},
+     {l:'宽松 · 仅自动检查',a:'preset:loose'}
+   ]},
+   '-',
+   {l:'角色分派…',k:'⇧⌘R',a:'assignRoles'}
+ ]},
+ {t:'帮助',items:[
+   {l:'工作流地图（skill 链路）',a:'helpFlow'},
+   {l:'skill 参考',a:'helpSkills'},
+   '-',
+   {l:'关于 Governance',a:'about'}
+ ]}
+];
+
+const PROJECTS={
+  camera:{
+    name:'camera-analytics',mode:'本地工作区',branch:'integration/camera-analytics',
+    dot:'run',blk:2,running:2,stageNo:6,stageTotal:9,stageName:'建造（AFK）',
+    updated:'16:41',note:'T3 产出提交 a91c2fe，/tdd 红→绿 4 个切片',owner:'你',team:1,kind:'产品',commits:11,
+    pipeline:[
+      {n:'概念初始化',s:'done',sk:'选择工作流路径'},
+      {n:'需求澄清',s:'done',sk:'/grill-with-docs',g:true},
+      {n:'不确定项验证',s:'done',sk:'/prototype + /handoff',g:true},
+      {n:'规格',s:'done',sk:'/to-spec'},
+      {n:'拆片',s:'blocked',sk:'/to-tickets · 待批准',g:true},
+      {n:'建造（AFK）',s:'active',sk:'/implement-spec + /tdd',g:true},
+      {n:'验收',s:'pending',sk:'/code-review',g:true},
+      {n:'发布',s:'pending',sk:'CI / CD',g:true},
+      {n:'复盘',s:'pending',sk:'/retro'}
+    ],
+    records:{
+      1:{title:'概念初始化',skill:'选择工作流路径',run:'15:52 → 15:58',by:'你',status:'已通过',
+        inputs:['空仓库 · 无上游'],actions:['2 轮对话','判定为常规主链路，不走 /wayfinder'],
+        artifacts:['.scratch/camera-analytics/ 目录建立'],gates:['无门'],
+        verdict:{by:'—',method:'—',evidence:'—',at:'15:58',result:'通过'}},
+      2:{title:'需求澄清',skill:'/grill-with-docs',run:'16:07 → 16:44',by:'你',status:'已通过',
+        inputs:['上游 run 15:52','research/throughput-notes.md','ADR-0006（采集协议）'],
+        actions:['7 轮追问','23 次工具调用','2 次读现有采集代码'],
+        artifacts:['GLOSSARY.md +6 术语（帧 · 批次 · 路数 · 告警阈值 · 冷存 · 回传窗口）','ADR-0007 新增：分析结果保留 90 天','spec.md @3f1d（草稿）'],
+        gates:['自动 3 通过','人工 2（追问 2/2 已答）'],
+        verdict:{by:'PO（你）',method:'人工签署 + 交叉验证',evidence:'2 项追问回答 + 吞吐研究笔记',at:'16:44',result:'通过'}},
+      3:{title:'不确定项验证',skill:'/prototype + /handoff',run:'16:46 → 17:05',by:'你',status:'已通过',
+        inputs:['spec.md @3f1d'],actions:['LOGIC 原型 ×1：批处理队列状态机','你驱动 6 个用例，否决其中 1 个状态转移'],
+        artifacts:['分支 prototype/batch-queue（保留为主源）','ADR-0008 新增：队列用背压而非丢帧'],
+        gates:['人工 1（采纳与否决）'],
+        verdict:{by:'PO（你）',method:'人工签署',evidence:'原型分支 + 1 条否决记录',at:'17:05',result:'通过'}},
+      4:{title:'规格',skill:'/to-spec',run:'17:06 → 17:14',by:'agent',status:'已通过',
+        inputs:['上游全部产物'],actions:['合成 spec，不追加采访','提出测试缝：单条 HTTP 边界'],
+        artifacts:['spec.md @6c02（定稿）'],gates:['自动 1 通过','人工 1（测试缝确认）'],
+        verdict:{by:'技术负责人（你）',method:'侧向验证',evidence:'平行 agent 复核测试缝位置',at:'17:14',result:'通过'}},
+      5:{title:'拆片',skill:'/to-tickets',run:'17:15 → 17:22',by:'agent',status:'待批准',
+        inputs:['spec.md @6c02'],actions:['拆出 7 个垂直切片','二轮连边（先建后连）','宽重构检查：无'],
+        artifacts:['.scratch/camera-analytics/issues/01..07','依赖边写入 tracker'],
+        gates:['自动 1 通过','人工 1 待你批准'],
+        verdict:{by:'PO（你）',method:'人工签署 + 侧向验证',evidence:'待批',at:'—',result:'待批准'}},
+      6:{title:'建造（AFK）',skill:'/implement-spec + /tdd',run:'17:23 → 至今',by:'agent',status:'进行中',
+        inputs:['issues/01..07','integration branch'],
+        actions:['2 个 implementer 子 agent 并行，各在自己 worktree','T1、T2 已合并；T3 进行中；T4 已就绪'],
+        artifacts:['提交 a91c2fe（T3 红→绿 4 个切片）','integration/camera-analytics 领先 main 11 个提交'],
+        gates:['自动 2 通过 · 1 失败后被修复','人工 1 待裁决（性能证据）'],
+        verdict:{by:'—',method:'—',evidence:'—',at:'—',result:'进行中'}},
+      7:{title:'验收',skill:'/code-review（Standards + Spec 双轴）',run:'—',by:'—',status:'未开始',
+        inputs:['—'],actions:['—'],artifacts:['—'],gates:['—'],
+        verdict:{by:'—',method:'—',evidence:'—',at:'—',result:'未开始'}},
+      8:{title:'发布',skill:'CI / CD',run:'—',by:'—',status:'未开始',
+        inputs:['—'],actions:['—'],artifacts:['—'],gates:['—'],
+        verdict:{by:'—',method:'—',evidence:'—',at:'—',result:'未开始'}},
+      9:{title:'复盘',skill:'/retro',run:'—',by:'—',status:'未开始',
+        inputs:['—'],actions:['—'],artifacts:['—'],gates:['—'],
+        verdict:{by:'—',method:'—',evidence:'—',at:'—',result:'未开始'}}
+    },
+    tickets:[
+      {id:'T1',s:'done',t:'单帧采集 → 分析 → 回传，端到端打通',seg:4,d:'无阻塞 · 已合并',col:1},
+      {id:'T2',s:'done',t:'采集设备注册与心跳',seg:4,d:'依赖 T1 · 已合并',col:2},
+      {id:'T3',s:'prog',t:'实时预览页面',seg:2,d:'依赖 T2 · agent 运行中',col:3},
+      {id:'T4',s:'ready',t:'批量帧分析队列',seg:0,d:'依赖 T2 · 可立即开工',col:3},
+      {id:'T5',s:'blocked',t:'分析结果看板与历史查询',seg:0,d:'依赖 T4',col:4},
+      {id:'T6',s:'blocked',t:'阈值告警与通知',seg:0,d:'依赖 T4',col:4},
+      {id:'T7',s:'blocked',t:'吞吐优化：12 fps → 30 fps',seg:0,d:'依赖 T5、T6 · 见收件箱',col:5,flag:true}
+    ],
+    gates:[
+      {id:'c1',lv:'warn',icon:'gate',title:'拆片待批准 · 7 个垂直切片',scope:'阶段 5 · 拆片',trigger:'自动规则（阶段出口）',
+       owner:'PO（你）',methods:['人工签署','侧向验证'],block:true,
+       body:'依赖边已按「阻塞块先做」连好，前沿是 T4。批准后建造阶段立即开工。',
+       btns:[['批准全部','拆分已批准，建造阶段开工'],['逐条审阅','已进入逐条审阅模式'],['要求重拆','已退回，要求更细粒度']]},
+      {id:'c2',lv:'crit',icon:'wrench',title:'缺少部署配置 · 发布阶段被阻塞',scope:'阶段 8 · 发布',trigger:'自动规则（配置探测）',
+       owner:'运维 / 发布',methods:['人工签署'],block:true,
+       body:'仓库中没有服务器 / 密钥配置。这是只有人能做的步骤，agent 不会自行编造凭据。',
+       btns:[['生成配置向导','已启动 /wizard：生成交互式向导，写入 .env 与 CI secrets'],['稍后提醒','已静音 24 小时'],['本次跳过发布','本次跳过发布，其余阶段继续']]},
+      {id:'c3',lv:'crit',icon:'bolt',title:'性能证据不达标 · 需要你裁决',scope:'切片 T7',trigger:'自动规则（阈值 30 fps）',
+       owner:'技术负责人',methods:['交叉验证','人工签署'],block:true,
+       body:'吞吐实测 12 fps，低于目标 30 fps（证据：bench/frames-2026-10-12.json）。agent 不自行下调目标。',
+       btns:[['重做该切片','已退回 T7，按新方案重做'],['下调目标','目标下调为 15 fps，已记入 ADR'],['接受现状','接受当前指标，记为已知限制']]}
+    ],
+    ci:{
+      pipe:[['ok','#482 · integration-branch','通过 · 3m12s'],['ok','#481 · 合并 T2','通过 · 2m58s'],['bad','#480 · T3 首次提交','失败 · 类型错误']],
+      servers:[['ok','staging · 10.0.4.21','健康 · 12ms'],['warn','prod · 10.0.9.7','v0.4.1 · 未配置']],
+      releases:[['v0.4.2 · 2026-10-12','待批准'],['v0.4.1 · 2026-10-09','已发布 · 回滚点'],['v0.4.0 · 2026-10-03','已发布']],
+      log:[['16:41','建造阶段在 T3 产出提交 a91c2fe，/tdd 红→绿 4 个切片'],
+           ['16:38','门控引擎判定：T7 需要人工裁决，写入收件箱'],
+           ['16:22','/code-review 双轴报告归档到 .scratch/camera-analytics/reviews/'],
+           ['16:05','拆片完成，7 个切片 + 依赖边写入 tracker']]
+    }
+  },
+  foundry:{
+    name:'fenric-foundry',mode:'本地工作区',branch:'feature/entitlements',
+    dot:'blk',blk:1,running:0,stageNo:4,stageTotal:9,stageName:'规格',
+    updated:'15:20',note:'插入验收门：架构选型（RBAC vs ABAC）待批',owner:'你',team:1,kind:'平台',commits:4,
+    pipeline:[
+      {n:'概念初始化',s:'done',sk:'选择工作流路径'},
+      {n:'需求澄清',s:'done',sk:'/grill-with-docs',g:true},
+      {n:'不确定项验证',s:'done',sk:'/prototype + /handoff',g:true},
+      {n:'规格',s:'active',sk:'/to-spec'},
+      {n:'拆片',s:'pending',sk:'/to-tickets'},
+      {n:'建造（AFK）',s:'pending',sk:'/implement-spec + /tdd'},
+      {n:'验收',s:'pending',sk:'/code-review'},
+      {n:'发布',s:'pending',sk:'CI / CD'},
+      {n:'复盘',s:'pending',sk:'/retro'}
+    ],
+    records:{},tickets:[],
+    gates:[
+      {id:'f1',lv:'warn',icon:'gate',title:'架构选型待批 · 授权模型',scope:'阶段 4 · 规格',trigger:'Modal 插入（你 15:20 挂的）',
+       owner:'技术负责人',methods:['侧向验证','对抗验证'],block:true,
+       body:'你把「授权模型用 RBAC 还是 ABAC」挂成了门。平行 agent 已出两份论证，红队已给 3 个反例。',
+       btns:[['采纳 RBAC','已采纳 RBAC，记入 ADR'],['采纳 ABAC','已采纳 ABAC，记入 ADR'],['再开一轮澄清','已退回澄清阶段']]}
+    ],
+    ci:{pipe:[['ok','#77 · feature/entitlements','通过 · 1m44s']],
+        servers:[['ok','staging · 10.0.5.3','健康 · 8ms']],
+        releases:[['v0.9.0 · 2026-09-28','已发布']],
+        log:[['15:20','你插入了一个验收门：架构选型']]}
+  },
+  railyard:{
+    name:'railyard-docs',mode:'本地工作区',branch:'docs/adr-0009',
+    dot:'ok',blk:0,running:0,stageNo:9,stageTotal:9,stageName:'已复盘',
+    updated:'14:02',note:'复盘完成：新增 2 条确定性检查、1 条编码标准',owner:'你',team:1,kind:'文档',commits:23,
+    pipeline:[
+      {n:'概念初始化',s:'done',sk:'选择工作流路径'},
+      {n:'需求澄清',s:'done',sk:'/grill-with-docs',g:true},
+      {n:'不确定项验证',s:'done',sk:'/prototype + /handoff'},
+      {n:'规格',s:'done',sk:'/to-spec'},
+      {n:'拆片',s:'done',sk:'/to-tickets',g:true},
+      {n:'建造（AFK）',s:'done',sk:'/implement-spec + /tdd'},
+      {n:'验收',s:'done',sk:'/code-review',g:true},
+      {n:'发布',s:'done',sk:'CI / CD'},
+      {n:'复盘',s:'done',sk:'/retro',g:true}
+    ],
+    records:{},tickets:[],
+    gates:[
+      {id:'r1',lv:'warn',icon:'clock',title:'外部 PR 待分诊',scope:'入口 · /triage',trigger:'自动规则（PR 探测）',
+       owner:'PO（你）',methods:['人工签署'],block:false,
+       body:'一个外部 PR 到达。按 /triage，它属于"不是你创建的"输入，需要走分诊而不是直接实现。',
+       btns:[['接受并转切片','已转为 agent-ready issue'],['要求补充信息','已回帖要求补充复现步骤'],['关闭','已关闭，标记 wontfix']]}
+    ],
+    ci:{pipe:[['ok','#210 · docs/adr-0009','通过 · 42s']],
+        servers:[['ok','static · 边缘','健康']],
+        releases:[['v0.8.0 · 2026-09-30','已发布']],
+        log:[['14:02','复盘完成：新增 2 条确定性检查、1 条编码标准']]}
+  }
+};
+
+const CHIP={done:['已完成','p-green'],prog:['进行中','p-blue'],ready:['前沿','p-orange'],blocked:['被阻塞','p-gray']};
+const TINT={warn:['--orange-t','--orange-d'],crit:['--red-t','--red-d'],ok:['--green-t','--green-d'],info:['--blue-t','--blue-d']};
+
+function P(){return PROJECTS[STATE.project];}
+function tint(k){const c=TINT[k]||TINT.info;return 'background:var('+c[0]+');color:var('+c[1]+')';}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2500);}
+
+let openIdx=null;
+function isChecked(k){
+  if(['overview','timeline','activity'].indexOf(k)>=0)return STATE.scope==='portfolio'&&STATE.pview===k;
+  if(['pipeline','board','inbox','releases','records'].indexOf(k)>=0)
+    return STATE.scope==='project'&&STATE.view===k;
+  if(k==='sidebar')return !document.getElementById('sidebar').classList.contains('collapsed');
+  if(k==='inspector')return !document.getElementById('inspector').classList.contains('collapsed');
+  if(k==='afk')return !!STATE.afk;
+  return false;
+}
+function buildMenu(items){
+  return items.map(it=>{
+    if(it==='-')return '<div class="msep"></div>';
+    if(it.sub)return '<div class="mitem has-sub"><span class="mc"></span><span class="ml">'+it.l+
+      '</span><span class="arw">▶</span><div class="menu">'+buildMenu(it.sub)+'</div></div>';
+    return '<div class="mitem'+(it.dis?' dis':'')+'"'+(it.a&&!it.dis?' data-a="'+it.a+'"':'')+'>'+
+      '<span class="mc">'+(it.c&&isChecked(it.c)?'✓':'')+'</span><span class="ml">'+it.l+'</span>'+
+      (it.k?'<span class="mk">'+it.k+'</span>':'')+'</div>';
+  }).join('');
+}
+function openMenuAt(i){
+  const el=document.getElementById('menubar');
+  el.querySelectorAll('.menu').forEach(m=>m.remove());
+  const titles=el.querySelectorAll('.mtitle');
+  titles.forEach((t,k)=>t.classList.toggle('open',k===i));
+  openIdx=i;
+  if(i===null)return;
+  const box=document.createElement('div');
+  box.className='menu on';
+  box.style.left=titles[i].offsetLeft+'px';
+  let items=MENUS[i].items.map(it=>{
+    if(it==='-'||it.sub)return it;
+    if(it.proj&&STATE.scope==='portfolio')return Object.assign({},it,{dis:true});
+    return it;
+  });
+  if(MENUS[i].t==='文件'){
+    const sub=[{l:'全部项目（总览）',a:'scope:portfolio'}];
+    Object.keys(PROJECTS).forEach(k=>sub.push({l:PROJECTS[k].name+(PROJECTS[k].blk?'（'+PROJECTS[k].blk+' 个阻塞）':''),a:'scope:'+k}));
+    items=items.concat(['-',{l:'前往项目',sub:sub}]);
+  }
+  box.innerHTML=buildMenu(items);
+  box.querySelectorAll('.mitem[data-a]').forEach(it=>{
+    it.onclick=e=>{e.stopPropagation();const a=it.dataset.a;closeMenu();if(a)runAction(a);};
+  });
+  box.querySelectorAll('.mitem.has-sub').forEach(it=>it.onclick=e=>e.stopPropagation());
+  el.appendChild(box);
+}
+function closeMenu(){openMenuAt(null);}
+function runAction(a){
+  if(a.indexOf('view:')===0){STATE.scope='project';STATE.view=a.slice(5);renderAll();return;}
+  if(a.indexOf('pview:')===0){STATE.scope='portfolio';STATE.pview=a.slice(6);renderAll();return;}
+  if(a.indexOf('scope:')===0){
+    const s=a.slice(6);
+    if(s==='portfolio')STATE.scope='portfolio';
+    else{STATE.scope='project';STATE.project=s;}
+    STATE.stage=1;STATE.gate=null;STATE.sw=false;
+    renderAll();
+    toast(s==='portfolio'?'已切换到全部项目总览':'已切换到 '+PROJECTS[s].name);
+    return;
+  }
+  const p=P();
+  switch(a){
+    case 'toggleSidebar':document.getElementById('sidebar').classList.toggle('collapsed');break;
+    case 'toggleInspector':document.getElementById('inspector').classList.toggle('collapsed');break;
+    case 'toggleAfk':STATE.afk=!STATE.afk;renderAll();
+      toast(STATE.afk?'AFK 模式已开启 — agent 跑到下一个阻塞点才叫你':'AFK 模式已关闭');
+      return;
+    case 'insertGate':openModal();return;
+    case 'approveAll':{
+      const n=p.gates.filter(g=>g.block).length;
+      p.gates.forEach(g=>{g.block=false;});
+      p.blk=0;renderAll();
+      toast(n?'已通过「'+p.name+'」的 '+n+' 个阻塞门，agent 继续往下跑':'当前项目没有待处理的门');
+      return;}
+    case 'advance':toast('已推进到下一阶段（原型）');break;
+    case 'rerun':toast('已重跑当前阶段');break;
+    case 'pauseAll':toast('已暂停全部 agent');break;
+    case 'rescan':toast('已重新扫描 .scratch/ 与 tracker，记录刷新');break;
+    case 'copyDossier':toast('阶段档案已拷贝为 markdown');break;
+    case 'exportAudit':toast('审计表已导出为 CSV');break;
+    case 'newProject':toast('已打开新建项目向导');break;
+    case 'openWs':toast('已打开工作区选择器');break;
+    case 'importRepo':toast('已打开仓库导入');break;
+    case 'settings':toast('已打开项目设置');break;
+    case 'gateDefaults':toast('已打开门的默认配置');break;
+    case 'assignRoles':toast('已打开角色分派');break;
+    case 'helpFlow':toast('grill-with-docs → prototype/handoff → to-spec → to-tickets → implement(-spec) → code-review → retro');break;
+    case 'helpSkills':toast('skill 参考：见 ~/.agents/skills/');break;
+    case 'about':toast('Governance Workbench · 原型 v4');break;
+    default:toast(a.indexOf('preset:')===0?'验收方法预设已切换':'（原型）'+a);
+  }
+}
+function renderMenubar(){
+  const el=document.getElementById('menubar');
+  const d=new Date();
+  const wd=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  const hm=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  const run=Object.values(PROJECTS).reduce((n,q)=>n+q.running,0);
+  el.innerHTML='<span class="mb-app">Governance</span>'+
+    MENUS.map((m,i)=>'<span class="mtitle" data-i="'+i+'">'+m.t+'</span>').join('')+
+    '<span class="extras">'+
+      '<span class="x">'+svg(ICON.bolt)+(run?run+' 个 agent':'无 agent')+'</span>'+
+      '<span class="x">'+svg(ICON.check)+'CI 绿</span>'+
+      '<span class="x">'+svg(ICON.gate)+blk+' 待处理</span>'+
+      '<span class="x" id="mbClock">'+wd+' '+hm+'</span>'+
+    '</span>';
+  el.querySelectorAll('.mtitle').forEach(t=>{
+    t.onclick=e=>{e.stopPropagation();openMenuAt(openIdx===+t.dataset.i?null:+t.dataset.i);};
+    t.onmouseenter=()=>{if(openIdx!==null&&openIdx!==+t.dataset.i)openMenuAt(+t.dataset.i);};
+  });
+  if(openIdx!==null)openMenuAt(openIdx);
+}
+
+function renderToolbar(){
+  const el=document.getElementById('crumbs');
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  const run=Object.values(PROJECTS).reduce((n,q)=>n+q.running,0);
+  const caret='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.4 8 10.4 12 6.4"/></svg>';
+  const back='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.6 4 5.6 8l4 4"/></svg>';
+  if(STATE.scope==='portfolio'){
+    el.innerHTML='<span class="crumb-btn" id="crumbSwitch" title="切换项目">全部项目'+caret+'</span>'+
+      '<span class="crumb-sub">'+Object.keys(PROJECTS).length+' 个项目 · '+run+' 个 agent 并行'+
+      (blk?' · <b style="color:var(--red-d);font-weight:600">'+blk+' 个阻塞待处理</b>':'')+'</span>';
+  }else{
+    const p=P();
+    el.innerHTML='<span class="crumb-to" id="crumbBack" title="返回全部项目">'+back+'全部项目</span>'+
+      '<span class="crumb-sep">›</span>'+
+      '<span class="crumb-last" id="crumbSwitch" title="切换项目"><span>'+p.name+'</span>'+caret+'</span>'+
+      '<span class="crumb-sub">'+p.mode+' · 阶段 '+p.stageNo+'/'+p.stageTotal+' · '+p.stageName+'</span>';
+  }
+  const swEl=document.getElementById('crumbSwitch');
+  if(swEl)swEl.onclick=e=>{e.stopPropagation();STATE.sw=!STATE.sw;renderSwitcher();};
+  const bkEl=document.getElementById('crumbBack');
+  if(bkEl)bkEl.onclick=e=>{e.stopPropagation();runAction('scope:portfolio');};
+  renderSwitcher();
+}
+
+function renderSwitcher(){
+  const el=document.getElementById('projsw');
+  if(!el)return;
+  el.classList.toggle('on',!!STATE.sw);
+  if(!STATE.sw){el.innerHTML='';return;}
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  let h='<div class="switem'+(STATE.scope==='portfolio'?' on':'')+'" data-s="portfolio">'+
+    '<span class="chk">'+(STATE.scope==='portfolio'?'✓':'')+'</span>'+
+    '<span class="dot '+(blk?'blk':'ok')+'"></span><span class="sw-nm">全部项目</span>'+
+    '<span class="sw-mt">'+Object.keys(PROJECTS).length+' 个 · '+blk+' 阻塞</span></div>'+
+    '<div class="msep"></div>';
+  h+=Object.keys(PROJECTS).map(k=>{const q=PROJECTS[k];
+    return '<div class="switem'+(STATE.scope==='project'&&STATE.project===k?' on':'')+'" data-s="'+k+'">'+
+      '<span class="chk">'+(STATE.scope==='project'&&STATE.project===k?'✓':'')+'</span>'+
+      '<span class="dot '+q.dot+'"></span><span class="sw-nm">'+q.name+'</span>'+
+      '<span class="sw-mt">'+q.stageNo+'/'+q.stageTotal+'</span></div>';}).join('');
+  el.innerHTML=h;
+  el.querySelectorAll('.switem').forEach(it=>it.onclick=e=>{
+    e.stopPropagation();runAction('scope:'+it.dataset.s);});
+}
+
+function renderSidebar(){
+  const p=P(), portfolio=STATE.scope==='portfolio';
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  const run=Object.values(PROJECTS).reduce((n,q)=>n+q.running,0);
+  let h='<div class="sb-scroll">';
+  h+='<div class="pitem'+(portfolio?' on':'')+'" data-s="portfolio" style="margin-bottom:6px">'+
+     '<span class="dot '+(blk?'blk':'ok')+'"></span><span class="nm">全部项目</span>'+
+     (blk?'<span class="cnt">'+blk+'</span>':'')+'</div>';
+  h+='<div class="sec">项目</div>';
+  h+=Object.keys(PROJECTS).map(k=>{const q=PROJECTS[k];
+    return '<div class="pitem'+(!portfolio&&k===STATE.project?' on':'')+'" data-s="'+k+'">'+
+      '<span class="dot '+q.dot+'"></span><span class="nm">'+q.name+'</span>'+
+      (q.blk?'<span class="cnt">'+q.blk+'</span>':'')+'</div>';}).join('');
+  h+='<div class="sec">'+(portfolio?'组合概览':'当前项目')+'</div><div class="meta">';
+  if(portfolio){
+    h+='<div>项目 <b>'+Object.keys(PROJECTS).length+'</b> · agent <b>'+run+'</b> · 阻塞 <b>'+blk+'</b></div>'+
+       '<div>推进中 '+Object.values(PROJECTS).filter(q=>q.blk>0).length+' · 已完成 '+
+       Object.values(PROJECTS).filter(q=>q.stageNo===q.stageTotal&&!q.blk).length+'</div>';
+  }else{
+    h+='<div>阶段 <b>'+p.stageNo+' / '+p.stageTotal+'</b> · '+p.stageName+'</div>'+
+       '<div>'+(p.running?p.running+' 个 agent 并行运行':'当前无 agent 运行')+'</div>'+
+       '<div class="mono">'+p.branch+'</div>';
+  }
+  h+='</div>';
+  h+='<div style="padding:12px 2px 4px"><button class="btn btn-p" style="width:100%" onclick="openModal()">插入验收门</button></div>';
+  h+='</div>';
+  const el=document.getElementById('sidebar');
+  el.innerHTML=h;
+  el.querySelectorAll('.pitem').forEach(e=>e.onclick=()=>runAction('scope:'+e.dataset.s));
+}
+
+function renderSeg(){
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  const portfolio=STATE.scope==='portfolio';
+  const items=portfolio
+    ? [['overview','总览'],['timeline','路线图'],['activity','动态']]
+    : [['pipeline','流水线'],['board','看板'],['inbox','收件箱'],['releases','发布'],['records','记录']];
+  const cur=portfolio?STATE.pview:STATE.view;
+  const pre=portfolio?'pview:':'view:';
+  const el=document.getElementById('seg');
+  el.innerHTML=items.map(it=>'<button class="segbtn'+(cur===it[0]?' on':'')+'" data-v="'+it[0]+'">'+
+    it[1]+(it[0]==='inbox'&&blk?'<span class="segdot"></span>':'')+'</button>').join('');
+  el.querySelectorAll('.segbtn').forEach(b=>b.onclick=()=>runAction(pre+b.dataset.v));
+  document.getElementById('bigTitle').textContent=portfolio?PVIEWNAME[STATE.pview]:VIEWNAME[STATE.view];
+}
+
+function renderStatusbar(){
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  const run=Object.values(PROJECTS).reduce((n,q)=>n+q.running,0);
+  document.getElementById('statusbar').innerHTML=
+    '<span><b>'+Object.keys(PROJECTS).length+'</b> 个项目</span>'+
+    '<span><b>'+run+'</b> 个 agent 并行</span>'+
+    '<span><b>'+blk+'</b> 个阻塞点待处理</span>'+
+    (STATE.afk?'<span class="pill p-blue">AFK 模式</span>':'')+
+    '<span class="sp"></span>'+
+    '<span>今日 token 成本 <b>¥46.20</b></span><span>CI 绿</span><span>守护进程已连接</span>';
+}
+
+function renderMain(){
+  const m=document.getElementById('main');
+  if(STATE.scope==='portfolio'){
+    m.innerHTML=STATE.pview==='overview'?pOverview()
+      :STATE.pview==='timeline'?pTimeline():pActivity();
+  }else{
+    const p=P();
+    m.innerHTML=STATE.view==='pipeline'?viewPipeline(p)
+      :STATE.view==='board'?viewBoard(p)
+      :STATE.view==='inbox'?viewInbox()
+      :STATE.view==='releases'?viewReleases(p):viewRecords(p);
+  }
+  bindMain();
+}
+
+function stageKeys(){return Object.keys(PROJECTS);}
+function ciOf(q){const c=q.ci.pipe[0];return {lv:c[0],id:c[1].split(' · ')[0],res:c[2]};}
+function tintDot(d){return d==='run'?'background:var(--blue)'
+  :d==='blk'?'background:var(--red)':'background:var(--green)';}
+
+function pOverview(){
+  const keys=stageKeys(),ps=keys.map(k=>PROJECTS[k]);
+  const blk=ps.reduce((n,q)=>n+q.blk,0);
+  const run=ps.reduce((n,q)=>n+q.running,0);
+  const ciBad=ps.filter(q=>ciOf(q).lv!=='ok').length;
+  const done=ps.filter(q=>q.stageNo===q.stageTotal&&!q.blk).length;
+  const stalled=ps.filter(q=>q.blk>0).length;
+  const tile=(l,v,u,n)=>'<div class="tile"><div class="tl">'+l+'</div><div class="tv">'+v+
+    (u?'<span class="tu">'+u+'</span>':'')+'</div>'+(n?'<div class="tn">'+n+'</div>':'')+'</div>';
+  let h='<div class="tiles">'+
+    tile('项目总数',keys.length,'个',done+' 个已跑完 · '+stalled+' 个有待处理阻塞')+
+    tile('并行 agent',run,'个',run?'正在建造中':'当前无 agent 运行')+
+    tile('待处理阻塞',blk,'个',blk?'需你介入才能继续':'所有项目均无阻塞')+
+    tile('CI 健康',(keys.length-ciBad)+'/'+keys.length,'',ciBad?ciBad+' 个项目最新流水线失败':'全部流水线通过')+
+  '</div>';
+
+  h+='<div class="card"><h3>项目跟踪'+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">点击任一行进入该项目</span>'+
+    '</h3><div class="bd" style="padding:0"><table class="ptbl"><thead><tr>'+
+    '<th>项目</th><th>阶段推进</th><th>当前阶段</th><th>阻塞</th><th>Agent</th><th>CI</th><th>最近活动</th>'+
+    '</tr></thead><tbody>';
+  keys.forEach(k=>{const q=PROJECTS[k],ci=ciOf(q);
+    h+='<tr data-s="'+k+'">'+
+      '<td><div class="pnm"><span class="dot '+q.dot+'"></span><div class="txt">'+
+        '<div class="n1">'+q.name+'</div><div class="n2">'+q.branch+'</div></div></div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:9px"><span class="mini">'+
+        q.pipeline.map(s=>'<i class="'+s.s+'"></i>').join('')+'</span>'+
+        '<span class="tnum">'+q.stageNo+'/'+q.stageTotal+'</span></div></td>'+
+      '<td><span class="pill '+(q.dot==='blk'?'p-red':q.dot==='run'?'p-blue':'p-green')+'">'+
+        q.stageName+'</span></td>'+
+      '<td>'+(q.blk?'<span class="pill p-red">'+q.blk+' 个</span>':'<span class="tnum" style="color:var(--label-3)">—</span>')+'</td>'+
+      '<td class="tnum">'+(q.running?q.running+' 个':'<span style="color:var(--label-3)">—</span>')+'</td>'+
+      '<td><div style="display:flex;align-items:center;gap:7px"><span class="sdot '+ci.lv+'"></span>'+
+        '<div><div class="tnum">'+ci.id+'</div>'+
+        '<div style="font-size:10.5px;color:var(--label-3);white-space:nowrap">'+ci.res+'</div></div></div></td>'+
+      '<td><div class="tnum">'+q.updated+'</div>'+
+        '<div style="font-size:11px;color:var(--label-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:236px">'+
+        q.note+'</div></td>'+
+    '</tr>';});
+  h+='</tbody></table></div></div>';
+
+  h+='<div class="card"><h3>待处理阻塞'+
+    (blk?'<span class="pill p-red" style="margin-left:9px">'+blk+'</span>':'')+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">全部项目聚合 · 含不阻塞项</span>'+
+    '</h3><div class="bd">';
+  let any=false;
+  keys.forEach(k=>{const q=PROJECTS[k];
+    q.gates.forEach(g=>{any=true;
+      h+='<div class="gate'+(g.block?'':' done-gate')+'" style="cursor:pointer" data-s="'+k+'">'+
+        '<div class="gh"><span class="gicon" style="'+tint(g.lv)+'">'+svg(ICON[g.icon]||ICON.gate)+'</span>'+
+        '<span class="nm">'+g.title+'</span>'+
+        '<span class="pill '+(g.block?'p-red':'p-gray')+'">'+(g.block?'阻塞':'不阻塞')+'</span></div>'+
+        '<div class="gmeta"><span class="pill p-gray">'+q.name+'</span>'+
+        '<span class="pill p-gray">'+g.scope+'</span>'+
+        '<span class="pill p-blue">验收人：'+g.owner+'</span></div>'+
+      '</div>';});});
+  if(!any)h+='<div class="empty">所有项目都没有待处理的阻塞点。可以放心离开。</div>';
+  h+='</div></div>';
+  return h;
+}
+
+function pTimeline(){
+  const keys=stageKeys();
+  const gateIdx={};
+  keys.forEach(k=>PROJECTS[k].pipeline.forEach((s,i)=>{if(s.g)gateIdx[i]=1;}));
+  let h='<div class="card"><h3>阶段路线图'+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">九个 SDLC 阶段 · 点击任一行进入该项目</span>'+
+    '</h3><div class="bd"><div class="tl"><div class="tl-inner">'+
+    '<div class="tlhead"><div></div><div class="tltrack">'+
+      STAGES.map((s,i)=>'<div class="hcell">'+s+(gateIdx[i]?'<span style="color:var(--orange)"> ◆</span>':'')+'</div>').join('')+
+    '</div></div>';
+  keys.forEach(k=>{const q=PROJECTS[k];
+    h+='<div class="tlrow" data-s="'+k+'">'+
+      '<div class="tlname"><span class="dot '+q.dot+'"></span><span>'+q.name+'</span></div>'+
+      '<div class="tltrack">'+q.pipeline.map(s=>
+        '<i class="'+s.s+'" title="'+s.n+' · '+s.sk+'"></i>').join('')+'</div>'+
+    '</div>';});
+  h+='</div></div><div class="tllegend">'+
+    '<span><i style="background:var(--green-t);border:.5px solid rgba(52,199,89,.5)"></i>已完成</span>'+
+    '<span><i style="background:var(--blue)"></i>进行中</span>'+
+    '<span><i style="background:var(--red-t);border:.5px solid rgba(255,59,48,.5)"></i>被阻塞</span>'+
+    '<span><i style="background:rgba(120,120,128,.12)"></i>未开始</span>'+
+    '<span style="margin-left:auto">阶段名后的 ◆ 表示该阶段带人工验收门</span>'+
+    '</div></div></div>';
+  return h;
+}
+
+function pActivity(){
+  const rows=[];
+  stageKeys().forEach(k=>{const q=PROJECTS[k];
+    q.ci.log.forEach(l=>rows.push({t:l[0],proj:q.name,dot:q.dot,text:l[1]}));});
+  rows.sort((a,b)=>a.t<b.t?1:a.t>b.t?-1:0);
+  let h='<div class="card"><h3>跨项目动态'+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">按时间倒序 · 合并全部项目的运行日志</span>'+
+    '</h3><div class="bd"><div class="feed">'+
+    rows.map(r=>'<div class="frow"><span class="ftime">'+r.t+'</span>'+
+      '<span class="fdot" style="'+tintDot(r.dot)+'"></span>'+
+      '<div class="fbody">'+r.text+'<div class="fproj">'+r.proj+'</div></div></div>').join('')+
+    '</div></div></div>';
+  h+='<div class="card"><h3>按项目统计</h3><div class="bd"><table class="ptbl"><thead><tr>'+
+    '<th>项目</th><th>阶段</th><th>已完成</th><th>阻塞</th><th>提交</th><th>最近更新</th>'+
+    '</tr></thead><tbody>';
+  stageKeys().forEach(k=>{const q=PROJECTS[k];
+    const dn=q.pipeline.filter(s=>s.s==='done').length;
+    h+='<tr data-s="'+k+'"><td><div class="pnm"><span class="dot '+q.dot+'"></span>'+
+      '<div class="txt"><div class="n1">'+q.name+'</div></div></div></td>'+
+      '<td class="tnum">'+q.stageNo+'/'+q.stageTotal+'</td>'+
+      '<td class="tnum">'+dn+' 个阶段</td>'+
+      '<td class="tnum">'+(q.blk||'—')+'</td>'+
+      '<td class="tnum">'+(q.commits||'—')+'</td>'+
+      '<td class="tnum">'+q.updated+'</td></tr>';});
+  h+='</tbody></table></div></div>';
+  return h;
+}
+
+function viewPipeline(p){
+  const rail=p.pipeline.map((s,i)=>
+    '<div class="stage '+s.s+(STATE.stage===i+1?' on':'')+'" data-i="'+(i+1)+'">'+
+    '<span class="idx">'+(i+1)+'</span><div style="min-width:0"><div class="nm">'+s.n+
+    (s.g?'<span class="gf">◆</span>':'')+'</div><div class="sk">'+s.sk+'</div></div></div>').join('');
+  const r=p.records[STATE.stage];
+  const dossier=r?dossierHTML(r):'<div class="card"><div class="empty">该阶段尚未执行，没有档案。<br>阶段开始后，输入、动作流、产物与验收结论会实时落进这里。</div></div>';
+  return '<div class="split"><div class="card"><h3>流水线</h3><div class="bd rail">'+rail+'</div></div>'+
+    '<div>'+dossier+'</div></div>';
+}
+
+function dossierHTML(r){
+  const row=(label,color,icon,val)=>
+    '<div class="drow"><span class="ibadge" style="'+color+'">'+svg(ICON[icon])+'</span>'+
+    '<div style="min-width:0;flex:1"><div class="dl">'+label+'</div><div class="dv">'+val+'</div></div></div>';
+  const v=r.verdict;
+  const st=r.status==='已通过'?'p-green':r.status==='待批准'?'p-orange':r.status==='进行中'?'p-blue':'p-gray';
+  return '<div class="card"><h3>'+
+      '<div class="dhead" style="flex:1"><span class="nm">阶段档案 · '+r.title+'</span></div>'+
+      '<span class="pill '+st+'">'+r.status+'</span></h3><div class="bd">'+
+    '<div style="font-size:11.5px;color:var(--label-3);margin-bottom:14px">'+
+      '<span class="mono" style="font-family:var(--mono)">'+r.skill+'</span> · run '+r.run+' · 触发：'+r.by+'</div>'+
+    row('输入（指针）',tint('info'),'input',r.inputs.join(' · '))+
+    row('动作流（append-only）',tint('ok'),'action',r.actions.join(' · '))+
+    row('产物增量（指针 + 哈希）',tint('warn'),'artifact',r.artifacts.join(' · '))+
+    row('门',tint('info'),'gate',r.gates.join(' · '))+
+    row('验收结论','background:var(--purple-t);color:var(--purple-d)','check',
+      '验收人 <b>'+v.by+'</b> · 方法 '+v.method+' · 依据 '+v.evidence+' · 时间 '+v.at+' · 结论 <b>'+v.result+'</b>')+
+    '</div></div>';
+}
+
+function viewBoard(p){
+  if(!p.tickets.length)return '<div class="card"><div class="empty">还没有切片。<br>跑完 /to-spec 与 /to-tickets，看板会自动出现。<br><br>记住：切片必须是垂直的 — 每片穿透数据库、服务、界面、测试四层。</div></div>';
+  const cols={};
+  p.tickets.forEach(t=>{(cols[t.col]=cols[t.col]||[]).push(t);});
+  const body=Object.keys(cols).sort((a,b)=>a-b).map(c=>
+    '<div class="col"><div class="colhead">第 '+c+' 层</div>'+cols[c].map(t=>
+      '<div class="tcard '+t.s+'"><div class="th"><span class="tid">'+t.id+'</span>'+
+      '<span class="pill '+CHIP[t.s][1]+'">'+CHIP[t.s][0]+'</span></div>'+
+      '<div class="ttl">'+t.t+(t.flag?' <span class="gf">◆</span>':'')+'</div>'+
+      '<div class="segs">'+[0,1,2,3].map(i=>'<i class="'+(i<t.seg?'on':'')+'"></i>').join('')+'</div>'+
+      '<div class="dep">'+t.d+'</div></div>').join('')+'</div>').join('');
+  return '<div class="card"><h3>垂直切片 <span class="pill p-teal">每片穿透四层</span>'+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">数据库 → 服务 → 界面 → 测试</span></h3>'+
+    '<div class="bd"><div class="legend">'+
+      '<span><i style="background:var(--green)"></i>已完成</span>'+
+      '<span><i style="background:var(--blue)"></i>进行中</span>'+
+      '<span><i style="background:var(--orange)"></i>前沿 · 可开工</span>'+
+      '<span><i style="background:#c7c7cc"></i>被阻塞</span></div>'+
+    '<div class="board">'+body+'</div></div></div>';
+}
+
+function viewInbox(){
+  const total=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  let h='<div class="card"><h3>待你处理 <span class="pill p-red">'+total+'</span>'+
+    '<span style="margin-left:auto;font-size:11px;color:var(--label-3);font-weight:400">跨项目聚合</span></h3><div class="bd">';
+  let any=false;
+  Object.keys(PROJECTS).forEach(k=>{
+    const q=PROJECTS[k];
+    if(!q.gates.length)return;
+    any=true;
+    h+='<div class="sec" style="padding:14px 2px 8px">'+q.name+'</div>';
+    q.gates.forEach(g=>{
+      h+='<div class="gate'+(STATE.gate===k+'/'+g.id?' on':'')+'" data-g="'+k+'/'+g.id+'">'+
+        '<div class="gh"><span class="gicon" style="'+tint(g.lv)+'">'+svg(ICON[g.icon]||ICON.gate)+'</span>'+
+        '<span class="nm">'+g.title+'</span>'+
+        '<span class="pill '+(g.block?'p-red':'p-gray')+'">'+(g.block?'阻塞':'不阻塞')+'</span></div>'+
+        '<div class="gb">'+g.body+'</div>'+
+        '<div class="gmeta"><span class="pill p-gray">'+g.scope+'</span>'+
+        '<span class="pill p-gray">触发：'+g.trigger+'</span>'+
+        '<span class="pill p-blue">验收人：'+g.owner+'</span>'+
+        g.methods.map(m=>'<span class="pill p-teal">'+m+'</span>').join('')+'</div>'+
+        '<div class="gbtns">'+g.btns.map((b,i)=>'<button class="btn'+(i===0?' btn-p':'')+'" data-msg="'+b[1]+'">'+b[0]+'</button>').join('')+'</div>'+
+      '</div>';
+    });
+  });
+  if(!any)h+='<div class="empty">所有项目都没有阻塞点。可以放心离开。</div>';
+  return h+'</div></div>';
+}
+
+function viewReleases(p){
+  const rows=a=>a.map(r=>'<div class="kv"><span class="sdot '+r[0]+'"></span><span class="k">'+r[1]+'</span><span class="v">'+r[2]+'</span></div>').join('');
+  return '<div class="card"><h3>流水线</h3><div class="bd">'+rows(p.ci.pipe)+'</div></div>'+
+    '<div class="card"><h3>服务器</h3><div class="bd">'+rows(p.ci.servers)+'</div></div>'+
+    '<div class="card"><h3>发布记录</h3><div class="bd">'+rows(p.ci.releases)+'</div></div>'+
+    '<div class="card"><h3>最近事件</h3><div class="bd"><div class="log">'+
+      p.ci.log.map(l=>'<div><b>'+l[0]+'</b>'+l[1]+'</div>').join('')+'</div></div></div>';
+}
+
+function viewRecords(p){
+  const keys=Object.keys(p.records);
+  if(!keys.length)return '<div class="card"><div class="empty">该项目暂无运行记录。</div></div>';
+  const rows=keys.map(i=>{const r=p.records[i];
+    const st=r.status==='已通过'?'p-green':r.status==='进行中'?'p-blue':'p-orange';
+    return '<tr><td>'+i+' · '+r.title+'</td><td class="mono">'+r.skill+'</td><td>'+r.run+'</td>'+
+      '<td>'+r.by+'</td><td>'+r.verdict.by+'</td><td>'+r.verdict.method+'</td>'+
+      '<td><span class="pill '+st+'">'+r.status+'</span></td></tr>';}).join('');
+  return '<div class="card"><h3>运行记录</h3><div class="bd" style="padding:0">'+
+    '<table class="audit"><thead><tr><th>阶段</th><th>skill</th><th>运行区间</th><th>触发者</th>'+
+    '<th>验收人</th><th>验收方法</th><th>状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+    '<div class="card"><h3>审计口径</h3><div class="bd" style="font-size:12.5px;color:var(--label-2);line-height:1.75">'+
+    '记录只追加、不修改。任何「通过」都必须落一条验收结论，写明<b style="color:var(--label)">谁、用什么方法、依据哪几份证据</b>。'+
+    '强制通过需要填理由，并且会永久留在这一行里。</div></div>';
+}
+
+function renderInspector(){
+  const el=document.getElementById('inspector');
+  if(STATE.scope==='portfolio'){el.innerHTML=globalInspector();return;}
+  const p=P();
+  let g=null;
+  if(STATE.gate){const s=STATE.gate.split('/');g=PROJECTS[s[0]].gates.find(x=>x.id===s[1]);}
+  if(!g&&p.gates.length)g=p.gates[0];
+  let h='<div class="ihead"><h2>门配置</h2>'+
+    '<button class="btn btn-p" onclick="openModal()">插入门</button></div>';
+  if(!g){el.innerHTML=h+'<div class="card"><div class="empty">该项目当前没有门。你可以随时手动插入一个。</div></div>';return;}
+  h+='<div class="card"><h3><span class="gicon" style="'+tint(g.lv)+';width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center">'+
+    svg(ICON[g.icon]||ICON.gate)+'</span>'+g.title+'</h3><div class="bd">'+
+    '<div style="font-size:11.5px;color:var(--label-3);line-height:1.85;margin-bottom:15px">'+
+    '范围：'+g.scope+'<br>触发方式：'+g.trigger+'</div>'+
+    '<div class="field"><label>验收人（角色）</label><select>'+
+      ['PO（你）','技术负责人','QA / 验收','运维 / 发布','安全','客户代表']
+      .map(o=>'<option'+(o===g.owner?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>验收方法</label><div class="checks">'+
+      ['自动检查','自检报告','侧向验证','交叉验证','对抗验证','人工签署']
+      .map(m=>'<label><input type="checkbox"'+(g.methods.indexOf(m)>=0?' checked':'')+'>'+m+'</label>').join('')+
+    '</div></div>'+
+    '<div class="field"><label>未通过时</label><select>'+
+      ['退回该切片，按新设计重做','下调目标并记入 ADR','接受现状，记为已知限制','升级给人处理，暂停后续阶段']
+      .map((o,i)=>'<option'+(i===0?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>阻塞</label><label class="sw"><input type="checkbox"'+(g.block?' checked':'')+'><i></i>阻塞后续阶段</label></div>'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+    '<button class="btn btn-p" style="flex:1" onclick="toast(\'门的配置已保存\')">保存</button>'+
+    '<button class="btn" style="flex:1" onclick="toast(\'已退回，agent 按新设计重做\')">退回重做</button>'+
+    '</div></div></div>';
+  h+='<div class="card"><h3>这条门会怎么执行</h3><div class="bd" style="font-size:12.5px;color:var(--label-2);line-height:1.75">'+
+    '先跑自动部分（CI / 类型 / 测试）。然后按你勾选的方法依次叠加：侧向验证会另起一个平行 agent，'+
+    '只读 spec 与证据、不看实现，独立给结论；交叉验证要求至少两条互相独立的证据都指向同一结论；'+
+    '对抗验证会派一个专门找反例的 agent。全部通过后，才把结论交给 <b style="color:var(--label)">'+g.owner+'</b> 等待签署。</div></div>';
+  el.innerHTML=h;
+}
+
+function globalInspector(){
+  const keys=Object.keys(PROJECTS);
+  const blk=Object.values(PROJECTS).reduce((n,q)=>n+q.blk,0);
+  let h='<div class="ihead"><h2>全局设置</h2>'+
+    '<button class="btn btn-p" onclick="openModal()">插入门</button></div>';
+
+  h+='<div class="card"><h3>组合状态</h3><div class="bd">';
+  keys.forEach(k=>{const q=PROJECTS[k];
+    h+='<div class="kv" style="cursor:pointer" onclick="runAction(\'scope:'+k+'\')">'+
+      '<span class="dot '+q.dot+'"></span><span class="k">'+q.name+'</span>'+
+      '<span class="v">'+q.stageNo+'/'+q.stageTotal+(q.blk?' · '+q.blk+' 阻塞':'')+'</span></div>';});
+  h+='</div></div>';
+
+  h+='<div class="card"><h3>门控默认值</h3><div class="bd">'+
+    '<div class="field"><label>新项目的默认验收方法</label><div class="checks">'+
+      ['自动检查','自检报告','侧向验证','交叉验证','对抗验证','人工签署']
+      .map((m,i)=>'<label><input type="checkbox"'+(i<2||i===5?' checked':'')+'>'+m+'</label>').join('')+
+    '</div><div class="hint">新项目初始化时套用；单个门仍可覆盖。</div></div>'+
+    '<div class="field"><label>默认未通过动作</label><select>'+
+      ['退回该切片，按新设计重做','下调目标并记入 ADR','接受现状，记为已知限制','升级给人处理，暂停后续阶段']
+      .map((o,i)=>'<option'+(i===0?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>阻塞行为</label><label class="sw"><input type="checkbox" checked><i></i>'+
+    '阻塞时不推进后续阶段</label></div>'+
+    '<div style="margin-top:14px"><button class="btn btn-p" style="width:100%" onclick="toast(\'全局门控默认值已保存\')">保存默认值</button></div>'+
+  '</div></div>';
+
+  h+='<div class="card"><h3>角色分派</h3><div class="bd">'+
+    '<div style="font-size:12px;color:var(--label-2);line-height:1.7;margin-bottom:13px">'+
+    '门挂的是<b style="color:var(--label)">角色</b>，不是人。现在 '+keys.length+
+    ' 个项目的全部角色都由你一个人承担；将来把成员挂到角色上，门本身不用改。</div>';
+  [['PO / 需求验收','你'],['技术负责人','你'],['QA / 验收','你'],['运维 / 发布','你'],['安全','你']]
+  .forEach(r=>{
+    h+='<div class="field" style="margin-bottom:9px"><label>'+r[0]+'</label><select>'+
+      '<option>'+r[1]+'</option><option>＋ 邀请成员…</option></select></div>';});
+  h+='<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="toast(\'已打开角色分派\')">管理成员</button></div>'+
+  '</div></div>';
+
+  h+='<div class="card"><h3>通知</h3><div class="bd">'+
+    '<div class="field"><label>什么时候叫我</label><div class="checks">'+
+      '<label><input type="checkbox" checked>阻塞点出现（当前 '+(blk||0)+' 个）</label>'+
+      '<label><input type="checkbox" checked>阶段完成待验收</label>'+
+      '<label><input type="checkbox">CI 失败</label>'+
+      '<label><input type="checkbox">agent 崩溃或超时</label>'+
+      '<label><input type="checkbox">发布被批准 / 回滚</label>'+
+    '</div></div>'+
+    '<div class="field"><label>渠道</label><div class="checks">'+
+      '<label><input type="checkbox" checked>桌面通知</label>'+
+      '<label><input type="checkbox" checked>邮件摘要（每 30 分钟）</label>'+
+      '<label><input type="checkbox">即时消息</label>'+
+    '</div></div>'+
+  '</div></div>';
+  return h;
+}
+
+function renderAll(){renderMenubar();renderToolbar();renderSidebar();renderSeg();renderMain();renderInspector();renderStatusbar();}
+
+function bindMain(){
+  document.querySelectorAll('.stage').forEach(s=>s.onclick=()=>{STATE.stage=+s.dataset.i;renderMain();});
+  document.querySelectorAll('#main .gate[data-g]').forEach(g=>g.onclick=e=>{
+    if(e.target.closest('.btn'))return;
+    STATE.gate=g.dataset.g;renderMain();renderInspector();});
+  document.querySelectorAll('#main .gate[data-s]').forEach(g=>g.onclick=e=>{
+    if(e.target.closest('.btn'))return;
+    STATE.scope='project';STATE.project=g.dataset.s;STATE.view='inbox';STATE.gate=null;
+    renderAll();toast('已进入 '+PROJECTS[g.dataset.s].name+' 的收件箱');});
+  document.querySelectorAll('#main tr[data-s]').forEach(r=>r.onclick=()=>runAction('scope:'+r.dataset.s));
+  document.querySelectorAll('#main .tlrow[data-s]').forEach(r=>r.onclick=()=>runAction('scope:'+r.dataset.s));
+  document.querySelectorAll('#main .gate .gbtns .btn').forEach(b=>b.onclick=()=>{
+    const card=b.closest('.gate');
+    card.classList.add('done-gate');
+    card.querySelectorAll('.btn').forEach(x=>x.disabled=true);
+    if(card.dataset.g){
+      const s=card.dataset.g.split('/');
+      const q=PROJECTS[s[0]],gate=q.gates.find(x=>x.id===s[1]);
+      if(gate&&gate.block)q.blk=Math.max(0,q.blk-1);
+    }
+    renderSidebar();renderSeg();renderStatusbar();
+    toast(b.dataset.msg);
+  });
+}
+
+function openModal(){
+  const portfolio=STATE.scope==='portfolio';
+  const p=P();
+  const pw=document.getElementById('mProjWrap'),pj=document.getElementById('mProj');
+  pw.style.display=portfolio?'':'none';
+  if(portfolio){
+    pj.innerHTML=Object.keys(PROJECTS).map(k=>
+      '<option value="'+k+'"'+(k===STATE.project?' selected':'')+'>'+PROJECTS[k].name+'</option>').join('');
+  }
+  document.getElementById('mScope').innerHTML=
+    p.pipeline.map((s,i)=>'<option value="阶段 '+(i+1)+' · '+s.n+'">阶段 '+(i+1)+' · '+s.n+'</option>').join('')+
+    p.tickets.map(t=>'<option value="切片 '+t.id+'">切片 '+t.id+' · '+t.t+'</option>').join('')+
+    '<option value="产物 · spec.md">产物 · spec.md</option>';
+  document.getElementById('overlay').classList.add('on');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('on');}
+
+function createGate(){
+  const target=(STATE.scope==='portfolio')?document.getElementById('mProj').value:STATE.project;
+  const p=PROJECTS[target];
+  const name=document.getElementById('mName').value.trim()||'人工验收门';
+  const scope=document.getElementById('mScope').value;
+  const owner=document.getElementById('mOwner').value;
+  const fail=document.getElementById('mFail').value;
+  const block=document.getElementById('mBlock').checked;
+  const methods=[].slice.call(document.querySelectorAll('.checks input:checked')).map(i=>i.value);
+  const note=document.getElementById('mNote').value.trim();
+  const id='x'+Date.now();
+  p.gates.unshift({id:id,lv:'warn',icon:'gate',title:name,scope:scope,trigger:'Modal 插入（你）',
+    owner:owner,methods:methods.length?methods:['人工签署'],block:block,
+    body:(note||'你手动挂上的验收门。')+' 未通过时：'+fail+'。',
+    btns:[['通过','门已通过，agent 继续'],[fail,'已按要求处理']]});
+  if(block)p.blk++;
+  STATE.scope='project';STATE.project=target;
+  STATE.gate=target+'/'+id;STATE.view='inbox';
+  closeModal();
+  document.getElementById('mName').value='';document.getElementById('mNote').value='';
+  renderAll();
+  toast('验收门已挂到 '+p.name+' 的「'+scope+'」，验收人：'+owner);
+}
+
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeModal();STATE.sw=false;renderSwitcher();}});
+document.addEventListener('click',()=>{
+  if(openIdx!==null)closeMenu();
+  if(STATE.sw){STATE.sw=false;renderSwitcher();}
+});
+document.addEventListener('keydown',e=>{
+  if(!(e.metaKey||e.ctrlKey))return;
+  const map={'0':'pview:overview','6':'pview:timeline','7':'pview:activity',
+    '1':'view:pipeline','2':'view:board','3':'view:inbox','4':'view:releases','5':'view:records',
+    'g':'insertGate'};
+  const a=map[e.key];
+  if(a){e.preventDefault();runAction(a);}
+});
+document.getElementById('sbToggle').onclick=()=>{
+  document.getElementById('sidebar').classList.toggle('collapsed');renderStatusbar();};
+document.getElementById('inspToggle').onclick=()=>{
+  document.getElementById('inspector').classList.toggle('collapsed');};
+setInterval(()=>{
+  const el=document.getElementById('mbClock');
+  if(!el)return;
+  const d=new Date();
+  const wd=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  const hm=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+  el.textContent=wd+' '+hm;
+},20000);
+
+renderAll();
+</script>
+</body>
+</html>

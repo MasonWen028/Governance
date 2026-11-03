@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output (regenerate with: npm run build)
+dist/
+.harness.mjs
+
+# Local / transient state
+.scratch/
+.workbuddy/
+governance.workspaces.json.bak-polluted
+
+# Python tooling bytecode
+tools/__pycache__/
+*.pyc
+
+# OS noise
+.DS_Store
+Thumbs.db
